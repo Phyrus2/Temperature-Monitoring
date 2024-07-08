@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Monitoring</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Temperature Monitoring</h1>
+        <div class="monitoring-section">
+            <div class="monitoring-item">
+                <h2>Highest Temperature</h2>
+                <p class="label">Temperature</p>
+                <p id="highest-temperature" class="value">31.1</p>
+                <p id="highest-temperature-date" class="date"></p>
+            </div>
+            <div class="monitoring-item">
+                <h2>Lowest Temperature</h2>
+                <p class="label">Temperature</p>
+                <p id="lowest-temperature" class="value">-2.3</p>
+                <p id="lowest-temperature-date" class="date"></p>
+            </div>
+            <div class="monitoring-item">
+                <h2>Highest Humidity</h2>
+                <p class="label">Humidity</p>
+                <p id="highest-humidity" class="value">51.1</p>
+                <p id="highest-humidity-date" class="date"></p>
+            </div>
+            <div class="monitoring-item">
+                <h2>Lowest Humidity</h2>
+                <p class="label">Humidity</p>
+                <p id="lowest-humidity" class="value">0</p>
+                <p id="lowest-humidity-date" class="date"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-chart-container">
+        <div class="filter-container">
+            <label for="start-date" class="form-label">Start: </label>
+            <input type="date" id="start-date" class="form-select">
+
+            <label for="end-date" class="form-label">End: </label>
+            <input type="date" id="end-date" class="form-select">
+
+            <button id="filter-button" class="form-select">Search</button>
+        </div>
+
+        <div class="chart-container">
+            <label for="chart-select">Select Chart: </label>
+            <select id="chart-select">
+                <option value="temperature">Temperature</option>
+                <option value="humidity">Humidity</option>
+            </select>
+            <label for="display-select">Display: </label>
+            <select id="display-select">
+                <option value="chart">Chart</option>
+                <option value="table">Table</option>
+            </select>
+            <canvas id="myChart"></canvas>
+            <div id="data-table" style="display:none;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Temperature (°C)</th>
+                                <th>Humidity (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="data-container"></div>
+
+    <!-- Modal Structure -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modal-message"></p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
