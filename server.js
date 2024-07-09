@@ -151,12 +151,14 @@ async function generateTable(data) {
     return pdfBuffer;
 }
 
-async function sendEmail() {
-    const month = 5; // Mei
-    const year = 2024; // Tahun 2024
+async function sendEmailForCurrentMonth() {
+    const now = new Date();
+    const month = now.getMonth() + 1; // Mendapatkan bulan saat ini (1-12)
+    const year = now.getFullYear(); // Mendapatkan tahun saat ini
 
     const sql = `SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi 
                  WHERE MONTH(date_stamp) = ? AND YEAR(date_stamp) = ? ORDER BY date_stamp`;
+
     db.query(sql, [month, year], async (err, results) => {
         if (err) {
             console.error('Error fetching data for email:', err);
@@ -174,14 +176,14 @@ async function sendEmail() {
                     user: 'madeyudaadiwinata@gmail.com',
                     pass: 'yakt dbuj midb bdle'  // Gantilah dengan kata sandi yang sebenarnya
                 },
-                logger: true,  // Menambah logger
-                debug: true    // Menambah debug
+                logger: true,
+                debug: true
             });
 
             let mailOptions = {
                 from: 'madeyudaadiwinata@gmail.com',
                 to: 'yudamulehensem@gmail.com',
-                subject: `Monthly Temperature and Humidity Report for May ${year}`,
+                subject: `Monthly Temperature and Humidity Report for ${getMonthName(month)} ${year}`,
                 text: 'Please find the attached charts and table for the monthly temperature and humidity data.',
                 attachments: [
                     {
@@ -212,15 +214,37 @@ async function sendEmail() {
     });
 }
 
+function getMonthName(month) {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[month - 1];  // month is 1-based index
+}
+
+
+cron.schedule('0 8 1 * *', async () => {
+    try {
+        await sendEmailForCurrentMonth();
+        console.log('Email sent successfully');
+    } catch (error) {
+        console.error('Error sending email:', error);
+    }
+}, {
+    timezone: 'Asia/Makassar'  // Asia/Makassar adalah zona waktu yang sesuai dengan WITA
+});
+
+// Endpoint untuk testing pengiriman email
 app.get('/test-email', async (req, res) => {
     try {
-        await sendEmail();
+        await sendEmailForCurrentMonth();  // Memanggil fungsi pengiriman email
         res.send('Email sent successfully');
     } catch (error) {
         console.error('Error in test email endpoint:', error);
         res.status(500).send('Failed to send email');
     }
 });
+
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
