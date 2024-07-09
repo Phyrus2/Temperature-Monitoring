@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const { createCanvas } = require('canvas');
 const puppeteer = require('puppeteer');
+const Chart = require('chart.js/auto');  // Import Chart.js
 
 const app = express();
 const port = 3000;
@@ -35,77 +36,46 @@ app.get('/fetch-data', (req, res) => {
         res.json(results);
     });
 });
+
 async function generateTemperatureChart(data) {
     const canvas = createCanvas(1200, 600);
     const ctx = canvas.getContext('2d');
 
-    // Fill the background with white color
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw axes
-    ctx.strokeStyle = 'black';
-    ctx.beginPath();
-    ctx.moveTo(50, 550);
-    ctx.lineTo(1150, 550); // x-axis
-    ctx.lineTo(1150, 50); // y-axis
-    ctx.stroke();
-
-    // Set font for labels
-    ctx.fillStyle = 'black';
-    ctx.font = '16px Arial';
-
-    // Draw labels
-    ctx.fillText('Temperature (°C)', 10, 30);
-    ctx.fillText('Date', 1150 - 40, 570);
-
-    // Scale data
-    const maxTemp = Math.max(...data.map(d => d.temperature));
-    const minTemp = Math.min(...data.map(d => d.temperature));
-    const yScale = (temp) => 550 - (temp - minTemp) * 500 / (maxTemp - minTemp);
-    const xScale = (index) => 50 + index * (1100 / (data.length - 1));
-
-    // Draw temperature line
-    ctx.strokeStyle = 'red';
-    ctx.beginPath();
-    data.forEach((point, index) => {
-        const x = xScale(index);
-        const y = yScale(point.temperature);
-        if (index === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Ubah format date_stamp
+            datasets: [{
+                label: 'Temperature (°C)',
+                data: data.map(row => row.temperature),
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date',
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Temperature (°C)',
+                    }
+                }
+            }
         }
     });
-    ctx.stroke();
-
-    // Draw temperature points
-    data.forEach((point, index) => {
-        const x = xScale(index);
-        const y = yScale(point.temperature);
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, 2 * Math.PI);
-        ctx.fill();
-    });
-
-    // Draw x-axis labels (dates)
-    ctx.fillStyle = 'black';
-    data.forEach((point, index) => {
-        const x = xScale(index);
-        if (index % Math.ceil(data.length / 20) === 0) {
-            ctx.save();
-            ctx.translate(x, 555);
-            ctx.rotate(-Math.PI / 4);
-            ctx.fillText(new Date(point.date_stamp).toISOString().split('T')[0], 0, 0); // Convert date_stamp to string and format as YYYY-MM-DD
-            ctx.restore();
-        }
-    });
-
-    // Draw y-axis labels (temperature)
-    for (let i = minTemp; i <= maxTemp; i += (maxTemp - minTemp) / 10) {
-        const y = yScale(i);
-        ctx.fillText(i.toFixed(1), 10, y);
-    }
 
     return canvas.toBuffer();
 }
@@ -114,77 +84,40 @@ async function generateHumidityChart(data) {
     const canvas = createCanvas(1200, 600);
     const ctx = canvas.getContext('2d');
 
-    // Fill the background with white color
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw axes
-    ctx.strokeStyle = 'black';
-    ctx.beginPath();
-    ctx.moveTo(50, 550);
-    ctx.lineTo(1150, 550); // x-axis
-    ctx.lineTo(1150, 50); // y-axis
-    ctx.stroke();
-
-    // Set font for labels
-    ctx.fillStyle = 'black';
-    ctx.font = '16px Arial';
-
-    // Draw labels
-    ctx.fillText('Humidity (%)', 10, 30);
-    ctx.fillText('Date', 1150 - 40, 570);
-
-    // Scale data
-    const maxHumidity = Math.max(...data.map(d => d.humidity));
-    const minHumidity = Math.min(...data.map(d => d.humidity));
-    const yScale = (humidity) => 550 - (humidity - minHumidity) * 500 / (maxHumidity - minHumidity);
-    const xScale = (index) => 50 + index * (1100 / (data.length - 1));
-
-    // Draw humidity line
-    ctx.strokeStyle = 'green';
-    ctx.beginPath();
-    data.forEach((point, index) => {
-        const x = xScale(index);
-        const y = yScale(point.humidity);
-        if (index === 0) {
-            ctx.moveTo(x, y);
-        } else {
-            ctx.lineTo(x, y);
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Ubah format date_stamp
+            datasets: [{
+                label: 'Humidity (%)',
+                data: data.map(row => row.humidity),
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    display: true
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Humidity (%)',
+                    }
+                }
+            }
         }
     });
-    ctx.stroke();
-
-    // Draw humidity points
-    data.forEach((point, index) => {
-        const x = xScale(index);
-        const y = yScale(point.humidity);
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, 2 * Math.PI);
-        ctx.fill();
-    });
-
-    // Draw x-axis labels (dates)
-    ctx.fillStyle = 'black';
-    data.forEach((point, index) => {
-        const x = xScale(index);
-        if (index % Math.ceil(data.length / 20) === 0) {
-            ctx.save();
-            ctx.translate(x, 555);
-            ctx.rotate(-Math.PI / 4);
-            ctx.fillText(new Date(point.date_stamp).toISOString().split('T')[0], 0, 0); // Convert date_stamp to string and format as YYYY-MM-DD
-            ctx.restore();
-        }
-    });
-
-    // Draw y-axis labels (humidity)
-    for (let i = minHumidity; i <= maxHumidity; i += (maxHumidity - minHumidity) / 10) {
-        const y = yScale(i);
-        ctx.fillText(i.toFixed(1), 10, y);
-    }
 
     return canvas.toBuffer();
 }
-
 
 
 async function generateTable(data) {
@@ -205,7 +138,7 @@ async function generateTable(data) {
             <tbody>
                 ${data.map(row => `
                     <tr>
-                        <td>${row.date_stamp}</td>
+                        <td>${new Date(row.date_stamp).toISOString().split('T')[0]}</td>
                         <td>${row.temperature}</td>
                         <td>${row.humidity}</td>
                     </tr>
@@ -217,6 +150,7 @@ async function generateTable(data) {
     await browser.close();
     return pdfBuffer;
 }
+
 async function sendEmail() {
     const month = 5; // Mei
     const year = 2024; // Tahun 2024
@@ -238,7 +172,7 @@ async function sendEmail() {
                 service: 'gmail',
                 auth: {
                     user: 'madeyudaadiwinata@gmail.com',
-                    pass: 'yakt dbuj midb bdle'
+                    pass: 'yakt dbuj midb bdle'  // Gantilah dengan kata sandi yang sebenarnya
                 },
                 logger: true,  // Menambah logger
                 debug: true    // Menambah debug
@@ -277,7 +211,6 @@ async function sendEmail() {
         }
     });
 }
-
 
 app.get('/test-email', async (req, res) => {
     try {

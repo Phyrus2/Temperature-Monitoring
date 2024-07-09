@@ -31,7 +31,6 @@ function fetchDataAndDisplay(startDate, endDate) {
     const displayType = document.getElementById('display-select').value;
     fetchData(startDate, endDate, true, selectedChart, displayType);
 }
-
 function drawTemperatureChart(data) {
     const ctx = document.getElementById('myChart').getContext('2d');
     const temperatures = data.map(row => parseFloat(row.temperature));
@@ -43,7 +42,7 @@ function drawTemperatureChart(data) {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => row.date_stamp),
+            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),
             datasets: [{
                 data: temperatures,
                 borderColor: 'rgba(255, 99, 132, 1)',
@@ -58,7 +57,18 @@ function drawTemperatureChart(data) {
             },
             scales: {
                 x: {
-                    display: true
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'YYYY-MM-DD',
+                        displayFormats: {
+                            day: 'YYYY-MM-DD'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
                 },
                 y: {
                     display: true,
@@ -83,7 +93,7 @@ function drawHumidityChart(data) {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => row.date_stamp),
+            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),
             datasets: [{
                 data: humidity,
                 borderColor: 'rgba(54, 162, 235, 1)',
@@ -98,7 +108,18 @@ function drawHumidityChart(data) {
             },
             scales: {
                 x: {
-                    display: true
+                    type: 'time',
+                    time: {
+                        unit: 'day',
+                        tooltipFormat: 'YYYY-MM-DD',
+                        displayFormats: {
+                            day: 'YYYY-MM-DD'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
                 },
                 y: {
                     display: true,
@@ -111,6 +132,7 @@ function drawHumidityChart(data) {
         }
     });
 }
+
 
 function renderTable(data) {
     const tableBody = document.getElementById('data-table-body');
