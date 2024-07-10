@@ -43,7 +43,7 @@ function drawTemperatureChart(data) {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => row.date_stamp),
+            labels: data.map(row => new Date(row.date_stamp).toLocaleDateString()),
             datasets: [{
                 data: temperatures,
                 borderColor: 'rgba(255, 99, 132, 1)',
@@ -83,7 +83,7 @@ function drawHumidityChart(data) {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => row.date_stamp),
+            labels: data.map(row => new Date(row.date_stamp).toLocaleDateString()),
             datasets: [{
                 data: humidity,
                 borderColor: 'rgba(54, 162, 235, 1)',
@@ -122,7 +122,7 @@ function renderTable(data) {
         const tempTd = document.createElement('td');
         const humidityTd = document.createElement('td');
 
-        dateTd.textContent = row.date_stamp;
+        dateTd.textContent = new Date(row.date_stamp).toLocaleDateString();
         tempTd.textContent = row.temperature + "°C";
         humidityTd.textContent = row.humidity + "%";
 
@@ -140,7 +140,6 @@ function renderTable(data) {
         tableWrapper.style.overflowY = 'hidden';
     }
 }
-
 
 function fetchData(startDate, endDate, isFiltered = false, selectedChart, displayType) {
     var xhr = new XMLHttpRequest();
@@ -185,8 +184,16 @@ function fetchData(startDate, endDate, isFiltered = false, selectedChart, displa
             }
         }
     };
-    xhr.open("GET", "fetch_data.php", true);
+    xhr.open("GET", `http://localhost:3000/fetch-data?startDate=${startDate}&endDate=${endDate}`, true); // Adjust the URL to your Express endpoint
     xhr.send();
+}
+
+function clearErrorMessage() {
+    const errorMessageElement = document.getElementById('error-message');
+    if (errorMessageElement) {
+        errorMessageElement.textContent = '';
+        errorMessageElement.style.display = 'none';
+    }
 }
 
 function filterDataByDateRange(data, startDate, endDate) {
@@ -250,44 +257,38 @@ function updateStats(data) {
         }
     });
 
-    console.log("Final highest temperature:", highestTemp, "on", highestTempDate);
-    console.log("Final lowest temperature:", lowestTemp, "on", lowestTempDate);
-    console.log("Final highest humidity:", highestHumidity, "on", highestHumidityDate);
-    console.log("Final lowest humidity:", lowestHumidity, "on", lowestHumidityDate);
-
     document.getElementById("highest-temperature").textContent = highestTemp + "°C";
-    document.getElementById("highest-temperature-date").textContent = highestTempDate;
+    document.getElementById("highest-temperature-date").textContent = new Date(highestTempDate).toLocaleDateString();
     document.getElementById("lowest-temperature").textContent = lowestTemp + "°C";
-    document.getElementById("lowest-temperature-date").textContent = lowestTempDate;
+    document.getElementById("lowest-temperature-date").textContent = new Date(lowestTempDate).toLocaleDateString();
     document.getElementById("highest-humidity").textContent = highestHumidity + "%";
-    document.getElementById("highest-humidity-date").textContent = highestHumidityDate;
+    document.getElementById("highest-humidity-date").textContent = new Date(highestHumidityDate).toLocaleDateString();
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
-    document.getElementById("lowest-humidity-date").textContent = lowestHumidityDate;
+    document.getElementById("lowest-humidity-date").textContent = new Date(lowestHumidityDate).toLocaleDateString();
+}
+ // Display error message in modal
+ function displayErrorMessage(message) {
+    const modal = document.getElementById('errorModal');
+    const modalMessage = document.getElementById('modal-message');
+    modalMessage.textContent = message;
+    modal.style.display = 'block';
 }
 
-function displayErrorMessage(message) {
-    var modal = document.getElementById("errorModal");
-    var span = document.getElementsByClassName("close")[0];
+// Close the modal when the close button is clicked
+document.querySelector('.close').addEventListener('click', function() {
+    const modal = document.getElementById('errorModal');
+    modal.style.display = 'none';
+});
 
-    document.getElementById("modal-message").textContent = message;
-
-    modal.style.display = "block";
-
-    span.onclick = function() {
-        modal.style.display = "none";
+// Close the modal when the user clicks outside of it
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('errorModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
     }
+});
 
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-}
 
-function clearErrorMessage() {
-    var errorContainer = document.getElementById("data-container");
-    errorContainer.innerHTML = "";
-}
-
-// Fetch and draw default chart on page load
-fetchDataAndDisplay(getDefaultDateRange().startDate, getDefaultDateRange().endDate);
+// Fetch data and display on initial load
+const defaultDateRange = getDefaultDateRange();
+fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);

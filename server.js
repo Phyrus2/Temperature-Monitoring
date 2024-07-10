@@ -5,16 +5,18 @@ const cron = require('node-cron');
 const { createCanvas } = require('canvas');
 const puppeteer = require('puppeteer');
 const Chart = require('chart.js/auto');  // Import Chart.js
+const cors = require('cors'); // Import cors module
 
 const app = express();
 const port = 3000;
+app.use(cors());
 
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: '',
     database: 'db_rpi',
-    connectTimeout: 60000 // Menambah waktu timeout koneksi ke database
+    connectTimeout: 60000 // Increase database connection timeout
 });
 
 db.connect(err => {
@@ -44,7 +46,7 @@ async function generateTemperatureChart(data) {
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Ubah format date_stamp
+            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Format date_stamp
             datasets: [{
                 label: 'Temperature (°C)',
                 data: data.map(row => row.temperature),
@@ -87,7 +89,7 @@ async function generateHumidityChart(data) {
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Ubah format date_stamp
+            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Format date_stamp
             datasets: [{
                 label: 'Humidity (%)',
                 data: data.map(row => row.humidity),
@@ -123,7 +125,7 @@ async function generateHumidityChart(data) {
 async function generateTable(data) {
     const browser = await puppeteer.launch({
         args: ['--no-sandbox'],
-        timeout: 60000 // Menambah waktu timeout puppeteer
+        timeout: 60000 // Increase puppeteer timeout
     });
     const page = await browser.newPage();
     await page.setContent(`
@@ -151,10 +153,11 @@ async function generateTable(data) {
     return pdfBuffer;
 }
 
+// Uncomment this function to send email for the current month
 // async function sendEmailForCurrentMonth() {
 //     const now = new Date();
-//     const month = now.getMonth() + 1; // Mendapatkan bulan saat ini (1-12)
-//     const year = now.getFullYear(); // Mendapatkan tahun saat ini
+//     const month = now.getMonth() + 1; // Get current month (1-12)
+//     const year = now.getFullYear(); // Get current year
 
 //     const sql = `SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi 
 //                  WHERE MONTH(date_stamp) = ? AND YEAR(date_stamp) = ? ORDER BY date_stamp`;
@@ -174,7 +177,7 @@ async function generateTable(data) {
 //                 service: 'gmail',
 //                 auth: {
 //                     user: 'madeyudaadiwinata@gmail.com',
-//                     pass: 'yakt dbuj midb bdle'  // Gantilah dengan kata sandi yang sebenarnya
+//                     pass: 'yakt dbuj midb bdle'  // Replace with actual password
 //                 },
 //                 logger: true,
 //                 debug: true
@@ -216,18 +219,18 @@ async function generateTable(data) {
 
 async function sendEmailForPreviousMonth() {
     const now = new Date();
-    const currentMonth = now.getMonth(); // Mendapatkan bulan saat ini (0-11)
-    const currentYear = now.getFullYear(); // Mendapatkan tahun saat ini
+    const currentMonth = now.getMonth(); // Get current month (0-11)
+    const currentYear = now.getFullYear(); // Get current year
 
     let month = currentMonth;
     let year = currentYear;
 
     if (currentMonth === 0) {
-        // Jika bulan saat ini adalah Januari, bulan sebelumnya adalah Desember tahun lalu
+        // If current month is January, previous month is December of last year
         month = 12;
         year = currentYear - 1;
     } else {
-        // Bulan sebelumnya adalah bulan saat ini - 1
+        // Previous month is current month - 1
         month = currentMonth;
     }
 
@@ -249,7 +252,7 @@ async function sendEmailForPreviousMonth() {
                 service: 'gmail',
                 auth: {
                     user: 'madeyudaadiwinata@gmail.com',
-                    pass: 'yakt dbuj midb bdle'  // Gantilah dengan kata sandi yang sebenarnya
+                    pass: 'yakt dbuj midb bdle'  // Replace with actual password
                 },
                 logger: true,
                 debug: true
@@ -257,7 +260,7 @@ async function sendEmailForPreviousMonth() {
 
             let mailOptions = {
                 from: 'madeyudaadiwinata@gmail.com',
-                to: 'yudamulehensem@gmail.com',
+                to: 'yudamulehensem@gmail.com, adisuarpala.pepito@gmail.com ',
                 subject: `Monthly Temperature and Humidity Report for ${getMonthName(month)} ${year}`,
                 text: 'Please find the attached charts and table for the monthly temperature and humidity data.',
                 attachments: [
@@ -289,7 +292,6 @@ async function sendEmailForPreviousMonth() {
     });
 }
 
-
 function getMonthName(month) {
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -298,10 +300,8 @@ function getMonthName(month) {
     return months[month - 1];  // month is 1-based index
 }
 
-
-
-
-cron.schedule('0 8 1 * *', async () => {
+// Schedule email sending for the 1st of every month at 8 AM
+cron.schedule('26 10 * * *', async () => {
     try {
         await sendEmailForPreviousMonth();
         console.log('Email sent successfully');
@@ -309,20 +309,36 @@ cron.schedule('0 8 1 * *', async () => {
         console.error('Error sending email:', error);
     }
 }, {
-    timezone: 'Asia/Makassar'  // Asia/Makassar adalah zona waktu yang sesuai dengan WITA
+    timezone: 'Asia/Makassar'  // Adjust to WITA timezone
 });
 
-
-
-// Endpoint untuk testing pengiriman email
+// Endpoint for testing email sending
 app.get('/test-email', async (req, res) => {
     try {
-        await sendEmailForPreviousMonth();  // Memanggil fungsi pengiriman email
+        await sendEmailForPreviousMonth();  // Call email sending function
         res.send('Email sent successfully');
     } catch (error) {
         console.error('Error in test email endpoint:', error);
         res.status(500).send('Failed to send email');
     }
+});
+
+app.get('/fetch-data', (req, res) => {
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
+
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'Start date and end date are required' });
+    }
+
+    const sql = "SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi WHERE date_stamp BETWEEN ? AND ? ORDER BY date_stamp";
+    db.query(sql, [startDate, endDate], (err, results) => {
+        if (err) {
+            console.error('Error fetching data:', err);
+            return res.status(500).json({ error: 'Failed to fetch data' });
+        }
+        res.json(results);
+    });
 });
 
 
