@@ -151,10 +151,85 @@ async function generateTable(data) {
     return pdfBuffer;
 }
 
-async function sendEmailForCurrentMonth() {
+// async function sendEmailForCurrentMonth() {
+//     const now = new Date();
+//     const month = now.getMonth() + 1; // Mendapatkan bulan saat ini (1-12)
+//     const year = now.getFullYear(); // Mendapatkan tahun saat ini
+
+//     const sql = `SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi 
+//                  WHERE MONTH(date_stamp) = ? AND YEAR(date_stamp) = ? ORDER BY date_stamp`;
+
+//     db.query(sql, [month, year], async (err, results) => {
+//         if (err) {
+//             console.error('Error fetching data for email:', err);
+//             return;
+//         }
+
+//         try {
+//             const temperatureChartBuffer = await generateTemperatureChart(results);
+//             const humidityChartBuffer = await generateHumidityChart(results);
+//             const tableBuffer = await generateTable(results);
+
+//             let transporter = nodemailer.createTransport({
+//                 service: 'gmail',
+//                 auth: {
+//                     user: 'madeyudaadiwinata@gmail.com',
+//                     pass: 'yakt dbuj midb bdle'  // Gantilah dengan kata sandi yang sebenarnya
+//                 },
+//                 logger: true,
+//                 debug: true
+//             });
+
+//             let mailOptions = {
+//                 from: 'madeyudaadiwinata@gmail.com',
+//                 to: 'yudamulehensem@gmail.com',
+//                 subject: `Monthly Temperature and Humidity Report for ${getMonthName(month)} ${year}`,
+//                 text: 'Please find the attached charts and table for the monthly temperature and humidity data.',
+//                 attachments: [
+//                     {
+//                         filename: 'temperature-chart.png',
+//                         content: temperatureChartBuffer
+//                     },
+//                     {
+//                         filename: 'humidity-chart.png',
+//                         content: humidityChartBuffer
+//                     },
+//                     {
+//                         filename: 'data-table.pdf',
+//                         content: tableBuffer
+//                     }
+//                 ]
+//             };
+
+//             transporter.sendMail(mailOptions, (error, info) => {
+//                 if (error) {
+//                     console.error('Error sending email:', error);
+//                     return;
+//                 }
+//                 console.log('Email sent: ' + info.response);
+//             });
+//         } catch (error) {
+//             console.error('Error generating charts or table:', error);
+//         }
+//     });
+// }
+
+async function sendEmailForPreviousMonth() {
     const now = new Date();
-    const month = now.getMonth() + 1; // Mendapatkan bulan saat ini (1-12)
-    const year = now.getFullYear(); // Mendapatkan tahun saat ini
+    const currentMonth = now.getMonth(); // Mendapatkan bulan saat ini (0-11)
+    const currentYear = now.getFullYear(); // Mendapatkan tahun saat ini
+
+    let month = currentMonth;
+    let year = currentYear;
+
+    if (currentMonth === 0) {
+        // Jika bulan saat ini adalah Januari, bulan sebelumnya adalah Desember tahun lalu
+        month = 12;
+        year = currentYear - 1;
+    } else {
+        // Bulan sebelumnya adalah bulan saat ini - 1
+        month = currentMonth;
+    }
 
     const sql = `SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi 
                  WHERE MONTH(date_stamp) = ? AND YEAR(date_stamp) = ? ORDER BY date_stamp`;
@@ -214,6 +289,7 @@ async function sendEmailForCurrentMonth() {
     });
 }
 
+
 function getMonthName(month) {
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -223,9 +299,11 @@ function getMonthName(month) {
 }
 
 
+
+
 cron.schedule('0 8 1 * *', async () => {
     try {
-        await sendEmailForCurrentMonth();
+        await sendEmailForPreviousMonth();
         console.log('Email sent successfully');
     } catch (error) {
         console.error('Error sending email:', error);
@@ -234,10 +312,12 @@ cron.schedule('0 8 1 * *', async () => {
     timezone: 'Asia/Makassar'  // Asia/Makassar adalah zona waktu yang sesuai dengan WITA
 });
 
+
+
 // Endpoint untuk testing pengiriman email
 app.get('/test-email', async (req, res) => {
     try {
-        await sendEmailForCurrentMonth();  // Memanggil fungsi pengiriman email
+        await sendEmailForPreviousMonth();  // Memanggil fungsi pengiriman email
         res.send('Email sent successfully');
     } catch (error) {
         console.error('Error in test email endpoint:', error);
