@@ -301,7 +301,7 @@ function getMonthName(month) {
 }
 
 // Schedule email sending for the 1st of every month at 8 AM
-cron.schedule('26 10 * * *', async () => {
+cron.schedule('26 10 1 * *', async () => {
     try {
         await sendEmailForPreviousMonth();
         console.log('Email sent successfully');
@@ -338,6 +338,45 @@ app.get('/fetch-data', (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch data' });
         }
         res.json(results);
+    });
+});
+
+app.get('/average-data', (req, res) => {
+    const query = `
+        SELECT 
+            date_stamp as date,
+            AVG(temperature) as avg_temperature,
+            AVG(humidity) as avg_humidity
+        FROM 
+            stg_incremental_load_rpi
+        WHERE 
+            time_stamp IN ('07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '20:00:00')
+        GROUP BY 
+            date_stamp;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            res.status(500).send('Error retrieving data');
+            return;
+        }
+
+        // Log hasil query ke console
+        console.log('Query results:', results);
+
+        if (results.length === 0) {
+            res.status(404).send('No data found for the specified time range');
+            return;
+        }
+
+        const formattedResults = results.map(row => ({
+            date: row.date,
+            avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
+            avg_humidity: parseFloat(row.avg_humidity).toFixed(2)
+        }));
+
+        res.json(formattedResults);
     });
 });
 
