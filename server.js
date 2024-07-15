@@ -385,6 +385,49 @@ app.get('/average-data', (req, res) => {
     });
 });
 
+app.get('/data-by-date', (req, res) => {
+    const { date } = req.query;
+    if (!date) {
+        res.status(400).send('Date parameter is required');
+        return;
+    }
+
+    const query = `
+        SELECT 
+            time_stamp,
+            temperature,
+            humidity
+        FROM 
+            stg_incremental_load_rpi
+        WHERE 
+            date_stamp = ?
+        ORDER BY 
+            time_stamp
+    `;
+
+    db.query(query, [date], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            res.status(500).send('Error retrieving data');
+            return;
+        }
+
+        if (results.length === 0) {
+            res.status(404).send('No data found for the specified date');
+            return;
+        }
+
+        const formattedResults = results.map(row => ({
+            time_stamp: row.time_stamp,
+            temperature: parseFloat(row.temperature).toFixed(2),
+            humidity: parseFloat(row.humidity).toFixed(2)
+        }));
+
+        console.log(`Data for date ${date}:`, formattedResults);
+        res.json(formattedResults);
+    });
+});
+
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
