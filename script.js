@@ -34,7 +34,7 @@ function fetchDataAndDisplay(startDate, endDate) {
 
 function drawTemperatureChart(data) {
     const ctx = document.getElementById('myChart').getContext('2d');
-    const temperatures = data.map(row => parseFloat(row.temperature));
+    const temperatures = data.map(row => Math.round(parseFloat(row.avg_temperature)));
 
     if (chart) {
         chart.destroy();
@@ -43,7 +43,7 @@ function drawTemperatureChart(data) {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => new Date(row.date_stamp).toLocaleDateString()),
+            labels: data.map(row => new Date(row.date).toLocaleDateString()),
             datasets: [{
                 data: temperatures,
                 borderColor: 'rgba(255, 99, 132, 1)',
@@ -65,6 +65,11 @@ function drawTemperatureChart(data) {
                     title: {
                         display: true,
                         text: 'Temperature (°C)',
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(0); // Menghapus desimal
+                        }
                     }
                 }
             }
@@ -74,7 +79,7 @@ function drawTemperatureChart(data) {
 
 function drawHumidityChart(data) {
     const ctx = document.getElementById('myChart').getContext('2d');
-    const humidity = data.map(row => parseFloat(row.humidity));
+    const humidity = data.map(row => Math.round(parseFloat(row.avg_humidity)));
 
     if (chart) {
         chart.destroy();
@@ -83,7 +88,7 @@ function drawHumidityChart(data) {
     chart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(row => new Date(row.date_stamp).toLocaleDateString()),
+            labels: data.map(row => new Date(row.date).toLocaleDateString()),
             datasets: [{
                 data: humidity,
                 borderColor: 'rgba(54, 162, 235, 1)',
@@ -105,12 +110,19 @@ function drawHumidityChart(data) {
                     title: {
                         display: true,
                         text: 'Humidity (%)',
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(0); // Menghapus desimal
+                        }
                     }
                 }
             }
         }
     });
 }
+
+
 
 function renderTable(data) {
     const tableBody = document.getElementById('data-table-body');
@@ -122,9 +134,9 @@ function renderTable(data) {
         const tempTd = document.createElement('td');
         const humidityTd = document.createElement('td');
 
-        dateTd.textContent = new Date(row.date_stamp).toLocaleDateString();
-        tempTd.textContent = row.temperature + "°C";
-        humidityTd.textContent = row.humidity + "%";
+        dateTd.textContent = new Date(row.date).toLocaleDateString();
+        tempTd.textContent = Math.round(row.avg_temperature) + "°C";
+        humidityTd.textContent = Math.round(row.avg_humidity) + "%";
 
         tr.appendChild(dateTd);
         tr.appendChild(tempTd);
@@ -141,83 +153,7 @@ function renderTable(data) {
     }
 }
 
-function fetchData(startDate, endDate, isFiltered = false, selectedChart, displayType) {
-    var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            if (this.status == 200) {
-                try {
-                    var responseText = this.responseText;
-                    console.log("Raw response text:", responseText);
-                    var data = JSON.parse(responseText);
-                    console.log("Parsed data:", data);
-                    var filteredData = filterDataByDateRange(data, startDate, endDate);
-                    console.log("Filtered data:", filteredData);
-                    if (filteredData.length === 0 && isFiltered) {
-                        displayErrorMessage("No temperature data available");
-                        var defaultDateRange = getDefaultDateRange();
-                        filteredData = filterDataByDateRange(data, defaultDateRange.startDate, defaultDateRange.endDate);
-                    } else {
-                        clearErrorMessage();
-                    }
-                    updateStats(filteredData);
-                    if (displayType === 'chart') {
-                        document.getElementById('myChart').style.display = 'block';
-                        document.getElementById('data-table').style.display = 'none';
-                        if (selectedChart === 'temperature') {
-                            drawTemperatureChart(filteredData);
-                        } else if (selectedChart === 'humidity') {
-                            drawHumidityChart(filteredData);
-                        }
-                    } else if (displayType === 'table') {
-                        document.getElementById('myChart').style.display = 'none';
-                        document.getElementById('data-table').style.display = 'block';
-                        renderTable(filteredData);
-                    }
-                } catch (e) {
-                    console.error("Error parsing JSON: ", e);
-                    displayErrorMessage("Error parsing JSON data.");
-                }
-            } else {
-                console.error("XHR request failed with status: ", this.status);
-                displayErrorMessage("Failed to fetch data. Status: " + this.status);
-            }
-        }
-    };
-    xhr.open("GET", `http://localhost:3000/fetch-data?startDate=${startDate}&endDate=${endDate}`, true); // Adjust the URL to your Express endpoint
-    xhr.send();
-}
 
-function clearErrorMessage() {
-    const errorMessageElement = document.getElementById('error-message');
-    if (errorMessageElement) {
-        errorMessageElement.textContent = '';
-        errorMessageElement.style.display = 'none';
-    }
-}
-
-function filterDataByDateRange(data, startDate, endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    console.log("Filtering data from", startDate, "to", endDate);
-
-    return data.filter(row => {
-        const date = new Date(row.date_stamp);
-        console.log("Row date:", row.date_stamp, "Parsed date:", date);
-        return date >= start && date <= end;
-    });
-}
-
-function getDefaultDateRange() {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 7);
-
-    return {
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0]
-    };
-}
 
 function updateStats(data) {
     if (data.length === 0) return;
@@ -229,9 +165,9 @@ function updateStats(data) {
     let highestHumidityDate = "", lowestHumidityDate = "";
 
     data.forEach(row => {
-        const temperature = parseFloat(row.temperature);
-        const humidity = parseFloat(row.humidity);
-        const date = row.date_stamp;
+        const temperature = parseFloat(row.avg_temperature);
+        const humidity = parseFloat(row.avg_humidity);
+        const date = row.date;
 
         console.log("Processing row:", row);
 
@@ -266,6 +202,139 @@ function updateStats(data) {
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
     document.getElementById("lowest-humidity-date").textContent = new Date(lowestHumidityDate).toLocaleDateString();
 }
+function fetchData(startDate, endDate, isFiltered = false, selectedChart, displayType) {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                try {
+                    var responseText = this.responseText;
+                    console.log("Raw response text:", responseText);
+                    var data = JSON.parse(responseText);
+                    console.log("Parsed data:", data); // Log data yang diterima
+                    var filteredData = filterDataByDateRange(data, startDate, endDate);
+                    console.log("Filtered data:", filteredData);
+                    if (filteredData.length === 0 && isFiltered) {
+                        displayErrorMessage("No temperature data available");
+                        var defaultDateRange = getDefaultDateRange();
+                        filteredData = filterDataByDateRange(data, defaultDateRange.startDate, defaultDateRange.endDate);
+                    } else {
+                        clearErrorMessage();
+                    }
+                    updateStats(filteredData);
+                    if (displayType === 'chart') {
+                        document.getElementById('myChart').style.display = 'block';
+                        document.getElementById('data-table').style.display = 'none';
+                        if (selectedChart === 'temperature') {
+                            drawTemperatureChart(filteredData);
+                        } else if (selectedChart === 'humidity') {
+                            drawHumidityChart(filteredData);
+                        }
+                    } else if (displayType === 'table') {
+                        document.getElementById('myChart').style.display = 'none';
+                        document.getElementById('data-table').style.display = 'block';
+                        renderTable(filteredData);
+                    }
+                } catch (e) {
+                    console.error("Error parsing JSON: ", e);
+                    displayErrorMessage("Error parsing JSON data.");
+                }
+            } else {
+                console.error("XHR request failed with status: ", this.status);
+                displayErrorMessage("Failed to fetch data. Status: " + this.status);
+            }
+        }
+    };
+    xhr.open("GET", `http://localhost:3000/average-data?startDate=${startDate}&endDate=${endDate}`, true); // Adjust the URL to your Express endpoint
+    xhr.send();
+}
+
+function filterDataByDateRange(data, startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    console.log("Filtering data from", startDate, "to", endDate);
+
+    return data.filter(row => {
+        const date = new Date(row.date);
+        console.log("Row date:", row.date, "Parsed date:", date);
+        return date >= start && date <= end;
+    });
+}
+
+
+
+
+
+function clearErrorMessage() {
+    const errorMessageElement = document.getElementById('error-message');
+    if (errorMessageElement) {
+        errorMessageElement.textContent = '';
+        errorMessageElement.style.display = 'none';
+    }
+}
+
+
+
+function getDefaultDateRange() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 7);
+
+    return {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
+    };
+}
+
+function updateStats(data) {
+    if (data.length === 0) return;
+
+    let highestTemp = -Infinity, lowestTemp = Infinity;
+    let highestTempDate = "", lowestTempDate = "";
+
+    let highestHumidity = -Infinity, lowestHumidity = Infinity;
+    let highestHumidityDate = "", lowestHumidityDate = "";
+
+    data.forEach(row => {
+        const temperature = Math.round(parseFloat(row.avg_temperature));
+        const humidity = Math.round(parseFloat(row.avg_humidity));
+        const date = row.date;
+
+        console.log("Processing row:", row);
+
+        if (temperature > highestTemp) {
+            highestTemp = temperature;
+            highestTempDate = date;
+            console.log("New highest temperature:", highestTemp, "on", highestTempDate);
+        }
+        if (temperature < lowestTemp) {
+            lowestTemp = temperature;
+            lowestTempDate = date;
+            console.log("New lowest temperature:", lowestTemp, "on", lowestTempDate);
+        }
+        if (humidity > highestHumidity) {
+            highestHumidity = humidity;
+            highestHumidityDate = date;
+            console.log("New highest humidity:", highestHumidity, "on", highestHumidityDate);
+        }
+        if (humidity < lowestHumidity) {
+            lowestHumidity = humidity;
+            lowestHumidityDate = date;
+            console.log("New lowest humidity:", lowestHumidity, "on", lowestHumidityDate);
+        }
+    });
+
+    document.getElementById("highest-temperature").textContent = highestTemp + "°C";
+    document.getElementById("highest-temperature-date").textContent = new Date(highestTempDate).toLocaleDateString();
+    document.getElementById("lowest-temperature").textContent = lowestTemp + "°C";
+    document.getElementById("lowest-temperature-date").textContent = new Date(lowestTempDate).toLocaleDateString();
+    document.getElementById("highest-humidity").textContent = highestHumidity + "%";
+    document.getElementById("highest-humidity-date").textContent = new Date(highestHumidityDate).toLocaleDateString();
+    document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
+    document.getElementById("lowest-humidity-date").textContent = new Date(lowestHumidityDate).toLocaleDateString();
+}
+
+
  // Display error message in modal
  function displayErrorMessage(message) {
     const modal = document.getElementById('errorModal');

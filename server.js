@@ -342,6 +342,12 @@ app.get('/fetch-data', (req, res) => {
 });
 
 app.get('/average-data', (req, res) => {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'Start date and end date are required' });
+    }
+
     const query = `
         SELECT 
             date_stamp as date,
@@ -350,24 +356,25 @@ app.get('/average-data', (req, res) => {
         FROM 
             stg_incremental_load_rpi
         WHERE 
-            time_stamp LIKE '07:00%' OR
+            (time_stamp LIKE '07:00%' OR
             time_stamp LIKE '10:00%' OR
             time_stamp LIKE '13:00%' OR
             time_stamp LIKE '16:00%' OR
             time_stamp LIKE '19:00%' OR
-            time_stamp LIKE '22:00%'
+            time_stamp LIKE '22:00%')
+            AND date_stamp BETWEEN ? AND ?
         GROUP BY 
             date_stamp;
     `;
 
-    db.query(query, (err, results) => {
+    db.query(query, [startDate, endDate], (err, results) => {
         if (err) {
             console.error('Error executing query:', err);
             res.status(500).send('Error retrieving data');
             return;
         }
 
-        // Log hasil query ke console
+        // Log query results to console
         console.log('Query results:', results);
 
         if (results.length === 0) {
