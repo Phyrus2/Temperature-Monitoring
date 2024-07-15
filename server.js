@@ -350,7 +350,12 @@ app.get('/average-data', (req, res) => {
         FROM 
             stg_incremental_load_rpi
         WHERE 
-            time_stamp IN ('07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '20:00:00')
+            time_stamp LIKE '07:00%' OR
+            time_stamp LIKE '10:00%' OR
+            time_stamp LIKE '13:00%' OR
+            time_stamp LIKE '16:00%' OR
+            time_stamp LIKE '19:00%' OR
+            time_stamp LIKE '22:00%'
         GROUP BY 
             date_stamp;
     `;
