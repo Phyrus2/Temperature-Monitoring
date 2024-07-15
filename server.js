@@ -153,69 +153,6 @@ async function generateTable(data) {
     return pdfBuffer;
 }
 
-// Uncomment this function to send email for the current month
-// async function sendEmailForCurrentMonth() {
-//     const now = new Date();
-//     const month = now.getMonth() + 1; // Get current month (1-12)
-//     const year = now.getFullYear(); // Get current year
-
-//     const sql = `SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi 
-//                  WHERE MONTH(date_stamp) = ? AND YEAR(date_stamp) = ? ORDER BY date_stamp`;
-
-//     db.query(sql, [month, year], async (err, results) => {
-//         if (err) {
-//             console.error('Error fetching data for email:', err);
-//             return;
-//         }
-
-//         try {
-//             const temperatureChartBuffer = await generateTemperatureChart(results);
-//             const humidityChartBuffer = await generateHumidityChart(results);
-//             const tableBuffer = await generateTable(results);
-
-//             let transporter = nodemailer.createTransport({
-//                 service: 'gmail',
-//                 auth: {
-//                     user: 'madeyudaadiwinata@gmail.com',
-//                     pass: 'yakt dbuj midb bdle'  // Replace with actual password
-//                 },
-//                 logger: true,
-//                 debug: true
-//             });
-
-//             let mailOptions = {
-//                 from: 'madeyudaadiwinata@gmail.com',
-//                 to: 'yudamulehensem@gmail.com',
-//                 subject: `Monthly Temperature and Humidity Report for ${getMonthName(month)} ${year}`,
-//                 text: 'Please find the attached charts and table for the monthly temperature and humidity data.',
-//                 attachments: [
-//                     {
-//                         filename: 'temperature-chart.png',
-//                         content: temperatureChartBuffer
-//                     },
-//                     {
-//                         filename: 'humidity-chart.png',
-//                         content: humidityChartBuffer
-//                     },
-//                     {
-//                         filename: 'data-table.pdf',
-//                         content: tableBuffer
-//                     }
-//                 ]
-//             };
-
-//             transporter.sendMail(mailOptions, (error, info) => {
-//                 if (error) {
-//                     console.error('Error sending email:', error);
-//                     return;
-//                 }
-//                 console.log('Email sent: ' + info.response);
-//             });
-//         } catch (error) {
-//             console.error('Error generating charts or table:', error);
-//         }
-//     });
-// }
 
 async function sendEmailForPreviousMonth() {
     const now = new Date();

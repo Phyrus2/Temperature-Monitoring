@@ -34,7 +34,7 @@ function fetchDataAndDisplay(startDate, endDate) {
 
 function drawTemperatureChart(data) {
     const ctx = document.getElementById('myChart').getContext('2d');
-    const temperatures = data.map(row => Math.round(parseFloat(row.avg_temperature)));
+   const temperatures = data.map(row => row.avg_temperature);
 
     if (chart) {
         chart.destroy();
@@ -79,7 +79,7 @@ function drawTemperatureChart(data) {
 
 function drawHumidityChart(data) {
     const ctx = document.getElementById('myChart').getContext('2d');
-    const humidity = data.map(row => Math.round(parseFloat(row.avg_humidity)));
+    const humidity = data.map(row => parseFloat(row.avg_humidity));
 
     if (chart) {
         chart.destroy();
@@ -135,8 +135,8 @@ function renderTable(data) {
         const humidityTd = document.createElement('td');
 
         dateTd.textContent = new Date(row.date).toLocaleDateString();
-        tempTd.textContent = Math.round(row.avg_temperature) + "°C";
-        humidityTd.textContent = Math.round(row.avg_humidity) + "%";
+        tempTd.textContent = row.avg_temperature + "°C";
+        humidityTd.textContent = row.avg_humidity + "%";
 
         tr.appendChild(dateTd);
         tr.appendChild(tempTd);
@@ -155,53 +155,7 @@ function renderTable(data) {
 
 
 
-function updateStats(data) {
-    if (data.length === 0) return;
 
-    let highestTemp = -Infinity, lowestTemp = Infinity;
-    let highestTempDate = "", lowestTempDate = "";
-
-    let highestHumidity = -Infinity, lowestHumidity = Infinity;
-    let highestHumidityDate = "", lowestHumidityDate = "";
-
-    data.forEach(row => {
-        const temperature = parseFloat(row.avg_temperature);
-        const humidity = parseFloat(row.avg_humidity);
-        const date = row.date;
-
-        console.log("Processing row:", row);
-
-        if (temperature > highestTemp) {
-            highestTemp = temperature;
-            highestTempDate = date;
-            console.log("New highest temperature:", highestTemp, "on", highestTempDate);
-        }
-        if (temperature < lowestTemp) {
-            lowestTemp = temperature;
-            lowestTempDate = date;
-            console.log("New lowest temperature:", lowestTemp, "on", lowestTempDate);
-        }
-        if (humidity > highestHumidity) {
-            highestHumidity = humidity;
-            highestHumidityDate = date;
-            console.log("New highest humidity:", highestHumidity, "on", highestHumidityDate);
-        }
-        if (humidity < lowestHumidity) {
-            lowestHumidity = humidity;
-            lowestHumidityDate = date;
-            console.log("New lowest humidity:", lowestHumidity, "on", lowestHumidityDate);
-        }
-    });
-
-    document.getElementById("highest-temperature").textContent = highestTemp + "°C";
-    document.getElementById("highest-temperature-date").textContent = new Date(highestTempDate).toLocaleDateString();
-    document.getElementById("lowest-temperature").textContent = lowestTemp + "°C";
-    document.getElementById("lowest-temperature-date").textContent = new Date(lowestTempDate).toLocaleDateString();
-    document.getElementById("highest-humidity").textContent = highestHumidity + "%";
-    document.getElementById("highest-humidity-date").textContent = new Date(highestHumidityDate).toLocaleDateString();
-    document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
-    document.getElementById("lowest-humidity-date").textContent = new Date(lowestHumidityDate).toLocaleDateString();
-}
 function fetchData(startDate, endDate, isFiltered = false, selectedChart, displayType) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
@@ -296,8 +250,8 @@ function updateStats(data) {
     let highestHumidityDate = "", lowestHumidityDate = "";
 
     data.forEach(row => {
-        const temperature = Math.round(parseFloat(row.avg_temperature));
-        const humidity = Math.round(parseFloat(row.avg_humidity));
+        const temperature = parseFloat(row.avg_temperature);
+        const humidity = parseFloat(row.avg_humidity);
         const date = row.date;
 
         console.log("Processing row:", row);
