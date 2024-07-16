@@ -68,15 +68,19 @@ function drawTemperatureChart(data) {
                         text: 'Temperature (°C)',
                     },
                     ticks: {
+                        stepSize: 1, // Set step size to 1
                         callback: function(value) {
                             return value.toFixed(0); // Menghapus desimal
                         }
-                    }
+                    },
+                    min: Math.floor(Math.min(...temperatures) - 1), // Adjust min value
+                    max: Math.ceil(Math.max(...temperatures) + 1)   // Adjust max value
                 }
             }
         }
     });
 }
+
 
 
 function drawHumidityChart(data) {
@@ -118,7 +122,9 @@ function drawHumidityChart(data) {
                         callback: function(value) {
                             return value.toFixed(0); // Menghapus desimal
                         }
-                    }
+                    },
+                    suggestedMin: Math.min(...humidity) - 1, // Mengurangi sedikit nilai minimum
+                    suggestedMax: Math.max(...humidity) + 1  // Menambah sedikit nilai maksimum
                 }
             }
         }
@@ -316,7 +322,7 @@ function updateStats(data, isSingleDay) {
     const formatDate = (dateObj) => {
         if (!dateObj) return "Invalid Date";
 
-        return isSingleDay ? dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : dateObj.toLocaleDateString();
+        return isSingleDay ? dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : dateObj.toLocaleDateString();
     };
 
     document.getElementById("highest-temperature").textContent = highestTemp + "°C";
@@ -328,6 +334,7 @@ function updateStats(data, isSingleDay) {
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
     document.getElementById("lowest-humidity-date").textContent = formatDate(lowestHumidityDate);
 }
+
 
 
 
