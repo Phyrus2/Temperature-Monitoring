@@ -119,6 +119,7 @@ function drawHumidityChart(data) {
                         text: 'Humidity (%)',
                     },
                     ticks: {
+                        stepSize: 1, // Set step size to 1
                         callback: function(value) {
                             return value.toFixed(0); // Menghapus desimal
                         }
