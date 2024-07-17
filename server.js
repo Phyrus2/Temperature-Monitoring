@@ -6,10 +6,14 @@ const { createCanvas } = require('canvas');
 const puppeteer = require('puppeteer');
 const Chart = require('chart.js/auto');  // Import Chart.js
 const cors = require('cors'); // Import cors module
+const http = require('http'); // Add this line
+const socketIo = require('socket.io'); // Add this line
 
 const app = express();
 const port = 3000;
 app.use(cors());
+const server = http.createServer(app); // Modify this line
+const io = socketIo(server); // Add this line
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -27,17 +31,7 @@ db.connect(err => {
     console.log('Database connected!');
 });
 
-app.get('/fetch-data', (req, res) => {
-    const sql = "SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi ORDER BY date_stamp";
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error('Error fetching data:', err);
-            res.status(500).send('Error fetching data');
-            return;
-        }
-        res.json(results);
-    });
-});
+
 
 async function generateTemperatureChart(data) {
     const canvas = createCanvas(1200, 600);
@@ -260,23 +254,19 @@ app.get('/test-email', async (req, res) => {
     }
 });
 
-app.get('/fetch-data', (req, res) => {
-    const startDate = req.query.startDate;
-    const endDate = req.query.endDate;
 
-    if (!startDate || !endDate) {
-        return res.status(400).json({ error: 'Start date and end date are required' });
-    }
 
-    const sql = "SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi WHERE date_stamp BETWEEN ? AND ? ORDER BY date_stamp";
-    db.query(sql, [startDate, endDate], (err, results) => {
-        if (err) {
-            console.error('Error fetching data:', err);
-            return res.status(500).json({ error: 'Failed to fetch data' });
-        }
-        res.json(results);
+
+io.on('connection', (socket) => {
+    console.log('New client connected');
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
     });
 });
+
+const notifyClients = (data) => {
+    io.emit('data-update', data);
+};
 
 app.get('/average-data', (req, res) => {
     const { startDate, endDate } = req.query;
@@ -311,9 +301,6 @@ app.get('/average-data', (req, res) => {
             return;
         }
 
-        // Log query results to console
-        console.log('Query results:', results);
-
         if (results.length === 0) {
             res.status(404).send('No data found for the specified time range');
             return;
@@ -325,6 +312,7 @@ app.get('/average-data', (req, res) => {
             avg_humidity: parseFloat(row.avg_humidity).toFixed(2)
         }));
 
+        notifyClients(formattedResults);
         res.json(formattedResults);
     });
 });
@@ -367,11 +355,10 @@ app.get('/data-by-date', (req, res) => {
             humidity: parseFloat(row.humidity).toFixed(2)
         }));
 
-        console.log(`Data for date ${date}:`, formattedResults);
+        notifyClients(formattedResults);
         res.json(formattedResults);
     });
 });
-
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
