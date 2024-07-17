@@ -1,4 +1,13 @@
 let chart;
+document.addEventListener('DOMContentLoaded', (event) => {
+    const defaultDateRange = getDefaultDateRange();
+    fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
+    setInterval(() => {
+        const startDate = document.getElementById('start-date').value || defaultDateRange.startDate;
+        const endDate = document.getElementById('end-date').value || defaultDateRange.endDate;
+        fetchDataAndDisplay(startDate, endDate);
+    }, 5000);
+});
 
 document.getElementById('filter-button').addEventListener('click', function() {
     const startDate = document.getElementById('start-date').value;
@@ -265,7 +274,7 @@ function clearErrorMessage() {
 function getDefaultDateRange() {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 7);
+    startDate.setDate(endDate.getDate() - 0);
 
     return {
         startDate: startDate.toISOString().split('T')[0],
