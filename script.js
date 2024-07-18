@@ -307,7 +307,7 @@ document.addEventListener('click', () => {
 // Event listener to ensure the audio is ready to play
 audio.addEventListener('canplaythrough', () => {
     audioReady = true;
-});
+    });
 
 function updateStats(data, isSingleDay) {
     if (data.length === 0) return;
