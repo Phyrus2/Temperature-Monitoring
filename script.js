@@ -282,6 +282,33 @@ function getDefaultDateRange() {
     };
 }
 
+let userInteracted = false;
+let audioReady = false;
+const audio = document.getElementById('alert-sound');
+
+// Preload the audio and set it to loop
+audio.loop = true;
+audio.load();
+
+// Event listener to capture user interaction and prepare the audio
+document.addEventListener('click', () => {
+    userInteracted = true;
+    if (!audioReady) {
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audioReady = true;
+        }).catch(error => {
+            console.error('Audio play failed:', error);
+        });
+    }
+}, { once: true }); // Listen only once
+
+// Event listener to ensure the audio is ready to play
+audio.addEventListener('canplaythrough', () => {
+    audioReady = true;
+});
+
 function updateStats(data, isSingleDay) {
     if (data.length === 0) return;
 
@@ -290,6 +317,8 @@ function updateStats(data, isSingleDay) {
 
     let highestHumidity = -Infinity, lowestHumidity = Infinity;
     let highestHumidityDate = "", lowestHumidityDate = "";
+
+    let temperatureAlertActive = false; // Flag to track if alert is active
 
     data.forEach(row => {
         const temperature = parseFloat(row.temperature || row.avg_temperature);
@@ -327,6 +356,11 @@ function updateStats(data, isSingleDay) {
             lowestHumidity = humidity;
             lowestHumidityDate = dateObject;
         }
+
+        // Check for temperature exceeding 30 degrees
+        if (temperature > 30) {
+            temperatureAlertActive = true;
+        }
     });
 
     const formatDate = (dateObj) => {
@@ -343,7 +377,43 @@ function updateStats(data, isSingleDay) {
     document.getElementById("highest-humidity-date").textContent = formatDate(highestHumidityDate);
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
     document.getElementById("lowest-humidity-date").textContent = formatDate(lowestHumidityDate);
+
+    // Handle temperature alert
+    handleTemperatureAlert(temperatureAlertActive);
 }
+
+function handleTemperatureAlert(isActive) {
+    if (isActive) {
+        if (userInteracted && audioReady && audio.paused) {
+            audio.play();
+        }
+        if (!Swal.isVisible()) {
+            Swal.fire({
+                title: "Warning!",
+                text: "Temperature exceeds 30 degrees.",
+                icon: "warning",
+                backdrop: `
+                    rgba(255,0,0,0.4)
+                    left top
+                    no-repeat
+                `,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false,
+                showConfirmButton: false
+            });
+        }
+    } else {
+        audio.pause();
+        audio.currentTime = 0;
+        if (Swal.isVisible()) {
+            Swal.close();
+        }
+    }
+}
+
+
+
 
 
 
