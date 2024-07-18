@@ -285,6 +285,7 @@ function getDefaultDateRange() {
 let userInteracted = false;
 let audioReady = false;
 const audio = document.getElementById('alert-sound');
+let lastAlertTimestamp = null;
 
 // Preload the audio and set it to loop
 audio.loop = true;
@@ -307,7 +308,7 @@ document.addEventListener('click', () => {
 // Event listener to ensure the audio is ready to play
 audio.addEventListener('canplaythrough', () => {
     audioReady = true;
-    });
+});
 
 function updateStats(data, isSingleDay) {
     if (data.length === 0) return;
@@ -319,6 +320,10 @@ function updateStats(data, isSingleDay) {
     let highestHumidityDate = "", lowestHumidityDate = "";
 
     let temperatureAlertActive = false; // Flag to track if alert is active
+
+    // Cari data dengan timestamp paling baru
+    let latestRow = null;
+    let latestDate = -Infinity;
 
     data.forEach(row => {
         const temperature = parseFloat(row.temperature || row.avg_temperature);
@@ -340,6 +345,11 @@ function updateStats(data, isSingleDay) {
             return;
         }
 
+        if (dateObject > latestDate) {
+            latestDate = dateObject;
+            latestRow = row;
+        }
+
         if (temperature > highestTemp) {
             highestTemp = temperature;
             highestTempDate = dateObject;
@@ -355,11 +365,6 @@ function updateStats(data, isSingleDay) {
         if (humidity < lowestHumidity) {
             lowestHumidity = humidity;
             lowestHumidityDate = dateObject;
-        }
-
-        // Check for temperature exceeding 30 degrees
-        if (temperature > 30) {
-            temperatureAlertActive = true;
         }
     });
 
@@ -378,15 +383,28 @@ function updateStats(data, isSingleDay) {
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
     document.getElementById("lowest-humidity-date").textContent = formatDate(lowestHumidityDate);
 
+    // Periksa suhu terbaru untuk mengaktifkan alert
+    if (latestRow) {
+        const latestTemperature = parseFloat(latestRow.temperature || latestRow.avg_temperature);
+        temperatureAlertActive = latestTemperature > 30;
+    }
+
     // Handle temperature alert
-    handleTemperatureAlert(temperatureAlertActive);
+    handleTemperatureAlert(temperatureAlertActive, latestDate);
 }
 
-function handleTemperatureAlert(isActive) {
+function handleTemperatureAlert(isActive, latestDate) {
+    const thirtyMinutes = 30 * 60 * 1000;
+
     if (isActive) {
+        if (lastAlertTimestamp && (new Date() - lastAlertTimestamp) < thirtyMinutes) {
+            return; // Don't show alert if it was shown within the last 30 minutes
+        }
+
         if (userInteracted && audioReady && audio.paused) {
             audio.play();
         }
+
         if (!Swal.isVisible()) {
             Swal.fire({
                 title: "Warning!",
@@ -400,7 +418,12 @@ function handleTemperatureAlert(isActive) {
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 allowEnterKey: false,
-                showConfirmButton: false
+                showConfirmButton: true
+            }).then(() => {
+                // This will be executed when the alert is closed
+                audio.pause();
+                audio.currentTime = 0;
+                lastAlertTimestamp = new Date(); // Update the last alert timestamp
             });
         }
     } else {
@@ -411,7 +434,6 @@ function handleTemperatureAlert(isActive) {
         }
     }
 }
-
 
 
 
