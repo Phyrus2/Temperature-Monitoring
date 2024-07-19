@@ -4,39 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Temperature Monitoring</title>
-    <link rel="stylesheet" href="styles.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.1.0/css/adminlte.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/collection/components/icon/icon.min.css">
 
 </head>
 <body>
-    <div class="container">
-        <h1>Temperature Monitoring</h1>
-        <div class="monitoring-section">
-            <div class="monitoring-item">
-                <h2>Highest Temperature</h2>
-                <p class="label">Temperature</p>
-                <p id="highest-temperature" class="value">31.1</p>
-                <p id="highest-temperature-date" class="date"></p>
-            </div>
-            <div class="monitoring-item">
-                <h2>Lowest Temperature</h2>
-                <p class="label">Temperature</p>
-                <p id="lowest-temperature" class="value">-2.3</p>
-                <p id="lowest-temperature-date" class="date"></p>
-            </div>
-            <div class="monitoring-item">
-                <h2>Highest Humidity</h2>
-                <p class="label">Humidity</p>
-                <p id="highest-humidity" class="value">51.1</p>
-                <p id="highest-humidity-date" class="date"></p>
-            </div>
-            <div class="monitoring-item">
-                <h2>Lowest Humidity</h2>
-                <p class="label">Humidity</p>
-                <p id="lowest-humidity" class="value">0</p>
-                <p id="lowest-humidity-date" class="date"></p>
+    <div class="row">
+        <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3 id="highest-temperature">31.1</h3>
+                    <p>Highest Temperature</p>
+                    <p id="highest-temperature-date" class="date"></p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-thermometer"></i>
+                </div>
+                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3 id="lowest-temperature">-2.3</h3>
+                    <p>Lowest Temperature</p>
+                    <p id="lowest-temperature-date" class="date"></p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-thermometer"></i>
+                </div>
+                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3 id="highest-humidity">51.1</h3>
+                    <p>Highest Humidity</p>
+                    <p id="highest-humidity-date" class="date"></p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-waterdrop"></i>
+                </div>
+                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg-3 col-6">
+            <!-- small box -->
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3 id="lowest-humidity">0</h3>
+                    <p>Lowest Humidity</p>
+                    <p id="lowest-humidity-date" class="date"></p>
+                </div>
+                <div class="icon">
+                    <i class="ion ion-waterdrop"></i>
+                </div>
+                <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <!-- ./col -->
     </div>
 
     <div class="filter-chart-container">
