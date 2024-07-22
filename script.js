@@ -1,4 +1,5 @@
 let chart;
+
 document.addEventListener('DOMContentLoaded', (event) => {
     const defaultDateRange = getDefaultDateRange();
     fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
@@ -23,125 +24,229 @@ document.getElementById('filter-button').addEventListener('click', function() {
     }
 });
 
-document.getElementById('chart-select').addEventListener('change', function() {
-    const startDate = document.getElementById('start-date').value || getDefaultDateRange().startDate;
-    const endDate = document.getElementById('end-date').value || getDefaultDateRange().endDate;
-    fetchDataAndDisplay(startDate, endDate);
-});
 
-document.getElementById('display-select').addEventListener('change', function() {
-    const startDate = document.getElementById('start-date').value || getDefaultDateRange().startDate;
-    const endDate = document.getElementById('end-date').value || getDefaultDateRange().endDate;
-    fetchDataAndDisplay(startDate, endDate);
-});
+
+let temperatureChart, humidityChart;
 
 function fetchDataAndDisplay(startDate, endDate) {
-    const selectedChart = document.getElementById('chart-select').value;
-    const displayType = document.getElementById('display-select').value;
-    fetchData(startDate, endDate, true, selectedChart, displayType);
+    fetchData(startDate, endDate, true, 'chart');
 }
 
-function drawTemperatureChart(data) {
-    const ctx = document.getElementById('myChart').getContext('2d');
+const drawTemperatureChart = (data, isSingleDay) => {
     const temperatures = data.map(row => parseFloat(row.temperature || row.avg_temperature));
-    const labels = data.map(row => row.time_stamp ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
+    const labels = data.map(row => isSingleDay ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
 
-    if (chart) {
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: temperatures,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    display: false
-                }
+    const temperatureChartOptions = {
+        series: [{
+            name: "Temperature",
+            data: temperatures,
+        }],
+        colors: ["#3C50E0"],
+        chart: {
+            fontFamily: "Satoshi, sans-serif",
+            height: 335,
+            type: "line",
+            dropShadow: {
+                enabled: true,
+                color: "#623CEA14",
+                top: 10,
+                blur: 4,
+                left: 0,
+                opacity: 0.1,
             },
-            scales: {
-                x: {
-                    display: true
+            toolbar: {
+                show: false,
+            },
+        },
+        responsive: [
+            {
+                breakpoint: 1024,
+                options: {
+                    chart: {
+                        height: 300,
+                    },
                 },
-                y: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Temperature (°C)',
+            },
+            {
+                breakpoint: 1366,
+                options: {
+                    chart: {
+                        height: 350,
                     },
-                    ticks: {
-                        stepSize: 1, // Set step size to 1
-                        callback: function(value) {
-                            return value.toFixed(0); // Menghapus desimal
-                        }
-                    },
-                    min: Math.floor(Math.min(...temperatures) - 1), // Adjust min value
-                    max: Math.ceil(Math.max(...temperatures) + 1)   // Adjust max value
-                }
-            }
+                },
+            },
+        ],
+        stroke: {
+            width: 2,
+            curve: "straight",
+        },
+        markers: {
+            size: 4,
+            colors: "#fff",
+            strokeColors: ["#3056D3"],
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+                size: undefined,
+                sizeOffset: 5,
+            },
+        },
+        xaxis: {
+            type: "category",
+            categories: labels,
+            axisBorder: {
+                show: false,
+            },
+            axisTicks: {
+                show: false,
+            },
+        },
+        yaxis: {
+            title: {
+                style: {
+                    fontSize: "0px",
+                },
+            },
+            min: Math.floor(Math.min(...temperatures) - 1),
+            max: Math.ceil(Math.max(...temperatures) + 1),
+        },
+        dataLabels: {
+            enabled: false,
+        },
+        grid: {
+            xaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+            yaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+        },
+    };
+
+    if (temperatureChart) {
+        temperatureChart.updateOptions(temperatureChartOptions);
+    } else {
+        const temperatureChartSelector = document.querySelector("#chartTemperature");
+        if (temperatureChartSelector) {
+            temperatureChart = new ApexCharts(temperatureChartSelector, temperatureChartOptions);
+            temperatureChart.render();
         }
-    });
-}
+    }
+};
 
-
-
-function drawHumidityChart(data) {
-    const ctx = document.getElementById('myChart').getContext('2d');
+const drawHumidityChart = (data, isSingleDay) => {
     const humidity = data.map(row => parseFloat(row.humidity || row.avg_humidity));
-    const labels = data.map(row => row.time_stamp ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
+    const labels = data.map(row => isSingleDay ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
 
-    if (chart) {
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: humidity,
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    display: false
-                }
+    const humidityChartOptions = {
+        series: [{
+            name: "Humidity",
+            data: humidity,
+        }],
+        colors: ["#80CAEE"],
+        chart: {
+            fontFamily: "Satoshi, sans-serif",
+            height: 335,
+            type: "line",
+            dropShadow: {
+                enabled: true,
+                color: "#623CEA14",
+                top: 10,
+                blur: 4,
+                left: 0,
+                opacity: 0.1,
             },
-            scales: {
-                x: {
-                    display: true
+            toolbar: {
+                show: false,
+            },
+        },
+        responsive: [
+            {
+                breakpoint: 1024,
+                options: {
+                    chart: {
+                        height: 300,
+                    },
                 },
-                y: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Humidity (%)',
+            },
+            {
+                breakpoint: 1366,
+                options: {
+                    chart: {
+                        height: 350,
                     },
-                    ticks: {
-                        stepSize: 1, // Set step size to 1
-                        callback: function(value) {
-                            return value.toFixed(0); // Menghapus desimal
-                        }
-                    },
-                    suggestedMin: Math.min(...humidity) - 1, // Mengurangi sedikit nilai minimum
-                    suggestedMax: Math.max(...humidity) + 1  // Menambah sedikit nilai maksimum
-                }
-            }
+                },
+            },
+        ],
+        stroke: {
+            width: 2,
+            curve: "straight",
+        },
+        markers: {
+            size: 4,
+            colors: "#fff",
+            strokeColors: ["#80CAEE"],
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+                size: undefined,
+                sizeOffset: 5,
+            },
+        },
+        xaxis: {
+            type: "category",
+            categories: labels,
+            axisBorder: {
+                show: false,
+            },
+            axisTicks: {
+                show: false,
+            },
+        },
+        yaxis: {
+            title: {
+                style: {
+                    fontSize: "0px",
+                },
+            },
+            min: Math.floor(Math.min(...humidity) - 1),
+            max: Math.ceil(Math.max(...humidity) + 1),
+        },
+        dataLabels: {
+            enabled: false,
+        },
+        grid: {
+            xaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+            yaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+        },
+    };
+
+    if (humidityChart) {
+        humidityChart.updateOptions(humidityChartOptions);
+    } else {
+        const humidityChartSelector = document.querySelector("#chartHumidity");
+        if (humidityChartSelector) {
+            humidityChart = new ApexCharts(humidityChartSelector, humidityChartOptions);
+            humidityChart.render();
         }
-    });
-}
-
-
+    }
+};
 
 
 function renderTable(data) {
@@ -189,7 +294,7 @@ function renderTable(data) {
 
 
 
-function fetchData(startDate, endDate, isFiltered = false, selectedChart, displayType) {
+function fetchData(startDate, endDate, isFiltered = false, displayType) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (this.readyState == 4) {
@@ -211,19 +316,13 @@ function fetchData(startDate, endDate, isFiltered = false, selectedChart, displa
                     }
                     const isSingleDay = startDate === endDate;
                     updateStats(data, isSingleDay);
-                    if (displayType === 'chart') {
-                        document.getElementById('myChart').style.display = 'block';
-                        document.getElementById('data-table').style.display = 'none';
-                        if (selectedChart === 'temperature') {
-                            drawTemperatureChart(data);
-                        } else if (selectedChart === 'humidity') {
-                            drawHumidityChart(data);
-                        }
-                    } else if (displayType === 'table') {
-                        document.getElementById('myChart').style.display = 'none';
-                        document.getElementById('data-table').style.display = 'block';
-                        renderTable(data);
-                    }
+                    
+                    // Always display charts
+                    document.getElementById('chartTemperature').style.display = 'block';
+                    document.getElementById('chartHumidity').style.display = 'block';
+                    drawTemperatureChart(data, isSingleDay);
+                    drawHumidityChart(data, isSingleDay);
+                    
                 } catch (e) {
                     console.error("Error parsing JSON: ", e);
                     displayErrorMessage("Error parsing JSON data.");
@@ -242,7 +341,6 @@ function fetchData(startDate, endDate, isFiltered = false, selectedChart, displa
     xhr.open("GET", url, true);
     xhr.send();
 }
-
 
 
 function filterDataByDateRange(data, startDate, endDate) {
