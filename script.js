@@ -256,35 +256,52 @@ function renderDetailedTable(data) {
 
     const times = ['07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '22:00:00'];
 
-    // Group data by date
+    // Group the data by date
     const groupedData = data.reduce((acc, curr) => {
         const date = new Date(curr.date).toLocaleDateString();
-        if (!acc[date]) acc[date] = {};
-        acc[date][curr.time] = { temperature: curr.temperature, humidity: curr.humidity };
+        const timeFormatted = curr.time.split(':').slice(0, 2).join(':') + ':00'; // Normalize time
+
+        if (!acc[date]) {
+            acc[date] = {
+                '07:00:00': { temperature: '-', humidity: '-' },
+                '10:00:00': { temperature: '-', humidity: '-' },
+                '13:00:00': { temperature: '-', humidity: '-' },
+                '16:00:00': { temperature: '-', humidity: '-' },
+                '19:00:00': { temperature: '-', humidity: '-' },
+                '22:00:00': { temperature: '-', humidity: '-' },
+            };
+        }
+
+        acc[date][timeFormatted] = {
+            temperature: curr.temperature,
+            humidity: curr.humidity
+        };
+        
         return acc;
     }, {});
 
+    // Create a row for each date
     Object.keys(groupedData).forEach(date => {
-        const tr = document.createElement('tr');
+        const divRow = document.createElement('div');
+        divRow.className = "grid grid-cols-7 border-t border-stroke px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5";
 
-        const dateTd = document.createElement('td');
-        dateTd.textContent = date;
-        tr.appendChild(dateTd);
+        const dateDiv = document.createElement('div');
+        dateDiv.className = "col-span-1 flex items-center";
+        dateDiv.textContent = date;
+        divRow.appendChild(dateDiv);
 
         times.forEach(time => {
-            const td = document.createElement('td');
-            const dataForTime = groupedData[date][time];
-            if (dataForTime) {
-                td.textContent = `${dataForTime.temperature}/${dataForTime.humidity}`;
-            } else {
-                td.textContent = '-';
-            }
-            tr.appendChild(td);
+            const timeDiv = document.createElement('div');
+            timeDiv.className = "col-span-1 flex items-center";
+            const dataEntry = groupedData[date][time];
+            timeDiv.textContent = `${dataEntry.temperature}/${dataEntry.humidity}`;
+            divRow.appendChild(timeDiv);
         });
 
-        tableBody.appendChild(tr);
+        tableBody.appendChild(divRow);
     });
 }
+
 
 
 
