@@ -45,6 +45,7 @@ const drawTemperatureChart = (data, isSingleDay) => {
         chart: {
             fontFamily: "Satoshi, sans-serif",
             height: 335,
+            
             type: "line",
             dropShadow: {
                 enabled: true,
@@ -57,6 +58,7 @@ const drawTemperatureChart = (data, isSingleDay) => {
             toolbar: {
                 show: false,
             },
+            width: "100%",
         },
         responsive: [
             {
