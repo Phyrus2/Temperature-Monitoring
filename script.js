@@ -254,13 +254,19 @@ function renderDetailedTable(data) {
     const tableBody = document.getElementById('data-table-body');
     tableBody.innerHTML = ''; // Clear existing rows
 
+    // Define the times that should appear in the table
     const times = ['07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '22:00:00'];
 
-    // Group the data by date
+    // Helper function to get time in HH:00:00 format
+    const formatTime = (time) => time.split(':').slice(0, 2).join(':') + ':00';
+
+    // Group the data by date and time range
     const groupedData = data.reduce((acc, curr) => {
         const date = new Date(curr.date).toLocaleDateString();
-        const timeFormatted = curr.time.split(':').slice(0, 2).join(':') + ':00'; // Normalize time
+        const timeFormatted = formatTime(curr.time);
+        const hour = parseInt(curr.time.split(':')[0], 10);
 
+        // Initialize the data structure if it doesn't exist
         if (!acc[date]) {
             acc[date] = {
                 '07:00:00': { temperature: '-', humidity: '-' },
@@ -272,11 +278,17 @@ function renderDetailedTable(data) {
             };
         }
 
-        acc[date][timeFormatted] = {
-            temperature: curr.temperature,
-            humidity: curr.humidity
-        };
-        
+        // Check if the time is within the range of the nearest hour slots
+        times.forEach(time => {
+            const timeHour = parseInt(time.split(':')[0], 10);
+            if (hour >= timeHour - 1 && hour <= timeHour + 1) {
+                acc[date][time] = {
+                    temperature: curr.temperature,
+                    humidity: curr.humidity
+                };
+            }
+        });
+
         return acc;
     }, {});
 
@@ -285,11 +297,13 @@ function renderDetailedTable(data) {
         const divRow = document.createElement('div');
         divRow.className = "grid grid-cols-7 border-t border-stroke px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5";
 
+        // Create and append the date column
         const dateDiv = document.createElement('div');
         dateDiv.className = "col-span-1 flex items-center";
         dateDiv.textContent = date;
         divRow.appendChild(dateDiv);
 
+        // Create and append the time slots
         times.forEach(time => {
             const timeDiv = document.createElement('div');
             timeDiv.className = "col-span-1 flex items-center";
@@ -301,6 +315,8 @@ function renderDetailedTable(data) {
         tableBody.appendChild(divRow);
     });
 }
+
+
 
 
 

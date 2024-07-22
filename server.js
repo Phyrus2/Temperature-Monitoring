@@ -283,12 +283,7 @@ app.get('/average-data', (req, res) => {
         FROM 
             stg_incremental_load_rpi
         WHERE 
-            (time_stamp LIKE '07:00%' OR
-            time_stamp LIKE '10:00%' OR
-            time_stamp LIKE '13:00%' OR
-            time_stamp LIKE '16:00%' OR
-            time_stamp LIKE '19:00%' OR
-            time_stamp LIKE '22:00%')
+            (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
             AND date_stamp BETWEEN ? AND ?
         GROUP BY 
             date_stamp;
@@ -324,6 +319,7 @@ app.get('/detailed-data', (req, res) => {
         return res.status(400).json({ error: 'Start date and end date are required' });
     }
 
+    // SQL query to fetch data based on the hour
     const query = `
         SELECT 
             date_stamp as date,
@@ -333,12 +329,7 @@ app.get('/detailed-data', (req, res) => {
         FROM 
             stg_incremental_load_rpi
         WHERE 
-            (time_stamp LIKE '07:00%' OR
-            time_stamp LIKE '10:00%' OR
-            time_stamp LIKE '13:00%' OR
-            time_stamp LIKE '16:00%' OR
-            time_stamp LIKE '19:00%' OR
-            time_stamp LIKE '22:00%')
+            (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
             AND date_stamp BETWEEN ? AND ?
         ORDER BY 
             date_stamp, time_stamp;
@@ -347,15 +338,14 @@ app.get('/detailed-data', (req, res) => {
     db.query(query, [startDate, endDate], (err, results) => {
         if (err) {
             console.error('Error executing query:', err);
-            res.status(500).send('Error retrieving data');
-            return;
+            return res.status(500).send('Error retrieving data');
         }
 
         if (results.length === 0) {
-            res.status(404).send('No data found for the specified time range');
-            return;
+            return res.status(404).send('No data found for the specified time range');
         }
 
+        // Format results
         const formattedResults = results.map(row => ({
             date: row.date,
             time: row.time,
@@ -363,10 +353,15 @@ app.get('/detailed-data', (req, res) => {
             humidity: parseFloat(row.humidity).toFixed(2)
         }));
 
+        // Notify clients (e.g., via Socket.io or other means)
         notifyClients(formattedResults);
+
+        // Send response
         res.json(formattedResults);
     });
 });
+
+
 
 
 app.get('/data-by-date', (req, res) => {
