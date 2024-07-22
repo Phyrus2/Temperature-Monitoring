@@ -317,6 +317,58 @@ app.get('/average-data', (req, res) => {
     });
 });
 
+app.get('/detailed-data', (req, res) => {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'Start date and end date are required' });
+    }
+
+    const query = `
+        SELECT 
+            date_stamp as date,
+            time_stamp as time,
+            temperature,
+            humidity
+        FROM 
+            stg_incremental_load_rpi
+        WHERE 
+            (time_stamp LIKE '07:00%' OR
+            time_stamp LIKE '10:00%' OR
+            time_stamp LIKE '13:00%' OR
+            time_stamp LIKE '16:00%' OR
+            time_stamp LIKE '19:00%' OR
+            time_stamp LIKE '22:00%')
+            AND date_stamp BETWEEN ? AND ?
+        ORDER BY 
+            date_stamp, time_stamp;
+    `;
+
+    db.query(query, [startDate, endDate], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            res.status(500).send('Error retrieving data');
+            return;
+        }
+
+        if (results.length === 0) {
+            res.status(404).send('No data found for the specified time range');
+            return;
+        }
+
+        const formattedResults = results.map(row => ({
+            date: row.date,
+            time: row.time,
+            temperature: parseFloat(row.temperature).toFixed(2),
+            humidity: parseFloat(row.humidity).toFixed(2)
+        }));
+
+        notifyClients(formattedResults);
+        res.json(formattedResults);
+    });
+});
+
+
 app.get('/data-by-date', (req, res) => {
     const { date } = req.query;
     if (!date) {

@@ -250,53 +250,51 @@ const drawHumidityChart = (data, isSingleDay) => {
     }
 };
 
-
-function renderTable(data) {
+function renderDetailedTable(data) {
     const tableBody = document.getElementById('data-table-body');
-    tableBody.innerHTML = ''; // Clear existing table data
+    tableBody.innerHTML = ''; // Clear existing rows
 
-    data.forEach(row => {
+    const times = ['07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '22:00:00'];
+
+    // Group data by date
+    const groupedData = data.reduce((acc, curr) => {
+        const date = new Date(curr.date).toLocaleDateString();
+        if (!acc[date]) acc[date] = {};
+        acc[date][curr.time] = { temperature: curr.temperature, humidity: curr.humidity };
+        return acc;
+    }, {});
+
+    Object.keys(groupedData).forEach(date => {
         const tr = document.createElement('tr');
-        const dateOrTimeTd = document.createElement('td');
-        const tempTd = document.createElement('td');
-        const humidityTd = document.createElement('td');
 
-        // Check if row contains time_stamp or date to differentiate between single day and range
-        if (row.time_stamp) {
-            // If time_stamp exists, it's a single day data
-            dateOrTimeTd.textContent = row.time_stamp;
-        } else {
-            // Otherwise, it's a date range data
-            dateOrTimeTd.textContent = new Date(row.date).toLocaleDateString();
-        }
+        const dateTd = document.createElement('td');
+        dateTd.textContent = date;
+        tr.appendChild(dateTd);
 
-        // Handle single day and date range temperature and humidity
-        const temperature = row.temperature || row.avg_temperature;
-        const humidity = row.humidity || row.avg_humidity;
-
-        tempTd.textContent = temperature + "°C";
-        humidityTd.textContent = humidity + "%";
-
-        tr.appendChild(dateOrTimeTd);
-        tr.appendChild(tempTd);
-        tr.appendChild(humidityTd);
+        times.forEach(time => {
+            const td = document.createElement('td');
+            const dataForTime = groupedData[date][time];
+            if (dataForTime) {
+                td.textContent = `${dataForTime.temperature}/${dataForTime.humidity}`;
+            } else {
+                td.textContent = '-';
+            }
+            tr.appendChild(td);
+        });
 
         tableBody.appendChild(tr);
     });
-
-    const tableWrapper = document.querySelector('.table-wrapper');
-    if (data.length > 20) {
-        tableWrapper.style.overflowY = 'auto';
-    } else {
-        tableWrapper.style.overflowY = 'hidden';
-    }
 }
 
 
 
 
 
+
+
+
 function fetchData(startDate, endDate, isFiltered = false, displayType) {
+    // Existing XMLHttpRequest for other endpoint
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (this.readyState == 4) {
@@ -305,7 +303,7 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     var responseText = this.responseText;
                     console.log("Raw response text:", responseText);
                     var data = JSON.parse(responseText);
-                    console.log("Parsed data:", data); // Log data yang diterima
+                    console.log("Parsed data:", data); // Log the received data
                     if (isFiltered) {
                         if (data.length === 0) {
                             displayErrorMessage("No data available for the selected date range.");
@@ -322,8 +320,14 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     // Always display charts
                     document.getElementById('chartTemperature').style.display = 'block';
                     document.getElementById('chartHumidity').style.display = 'block';
+                    
                     drawTemperatureChart(data, isSingleDay);
                     drawHumidityChart(data, isSingleDay);
+                    
+                    // Display table if needed
+                    if (displayType === 'table') {
+                        renderDetailedTable(data);
+                    }
                     
                 } catch (e) {
                     console.error("Error parsing JSON: ", e);
@@ -336,13 +340,58 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
         }
     };
 
+    // Existing URL for the other endpoint
     const url = startDate === endDate ? 
         `http://localhost:3000/data-by-date?date=${startDate}` :
         `http://localhost:3000/average-data?startDate=${startDate}&endDate=${endDate}`;
 
     xhr.open("GET", url, true);
     xhr.send();
+
+    // New XMLHttpRequest to call the /detailed-data endpoint
+    var xhrDetailed = new XMLHttpRequest();
+    xhrDetailed.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                try {
+                    var responseTextDetailed = this.responseText;
+                    console.log("Raw response text (detailed):", responseTextDetailed);
+                    var dataDetailed = JSON.parse(responseTextDetailed);
+                    console.log("Parsed data (detailed):", dataDetailed); // Log the received data
+                    if (isFiltered) {
+                        if (dataDetailed.length === 0) {
+                            displayErrorMessage("No detailed data available for the selected date range.");
+                            var defaultDateRange = getDefaultDateRange();
+                            fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
+                            return;
+                        } else {
+                            clearErrorMessage();
+                        }
+                    }
+                    // Display table if needed
+                   
+                        renderDetailedTable(dataDetailed);
+                        console.log("Detailed data")
+                    
+                    
+                } catch (e) {
+                    console.error("Error parsing JSON (detailed): ", e);
+                    displayErrorMessage("Error parsing JSON data (detailed).");
+                }
+            } else {
+                console.error("XHR request for detailed data failed with status: ", this.status);
+                displayErrorMessage("Failed to fetch detailed data. Status: " + this.status);
+            }
+        }
+    };
+
+    // New URL for the /detailed-data endpoint
+    const urlDetailed = `http://localhost:3000/detailed-data?startDate=${startDate}&endDate=${endDate}`;
+    
+    xhrDetailed.open("GET", urlDetailed, true);
+    xhrDetailed.send();
 }
+
 
 
 function filterDataByDateRange(data, startDate, endDate) {
