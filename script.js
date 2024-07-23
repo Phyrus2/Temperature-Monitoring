@@ -11,19 +11,38 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 document.getElementById('filter-button').addEventListener('click', function() {
-    const startDate = document.getElementById('start-date').value;
-    const endDate = document.getElementById('end-date').value;
-    if (startDate && endDate) {
-        if (new Date(startDate) > new Date(endDate)) {
-            displayErrorMessage("End date cannot be earlier than start date.");
-        } else {
-            fetchDataAndDisplay(startDate, endDate);
-        }
+    let startDate = document.getElementById('start-date').value;
+    let endDate = document.getElementById('end-date').value;
+    const dateRangeDisplay = document.getElementById('date-range-display');
+
+    if (!startDate || !endDate) {
+        const defaultDates = getDefaultDateRange();
+        startDate = defaultDates.startDate;
+        endDate = defaultDates.endDate;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+        displayErrorMessage("End date cannot be earlier than start date.");
+        dateRangeDisplay.innerText = ""; // Clear the date range display on error
     } else {
-        displayErrorMessage("Please select both start and end dates.");
+        fetchDataAndDisplay(startDate, endDate);
+        const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
     }
 });
 
+
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultDates = getDefaultDateRange();
+    document.getElementById('start-date').value = defaultDates.startDate;
+    document.getElementById('end-date').value = defaultDates.endDate;
+
+    const dateRangeDisplay = document.getElementById('date-range-display');
+    const formattedStartDate = new Date(defaultDates.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedEndDate = new Date(defaultDates.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
+});
 
 
 let temperatureChart, humidityChart;
@@ -125,8 +144,7 @@ const drawTemperatureChart = (data, isSingleDay) => {
                     fontSize: "0px",
                 },
             },
-            min: Math.floor(Math.min(...temperatures) - 1),
-            max: Math.ceil(Math.max(...temperatures) + 1),
+            
         },
         dataLabels: {
             enabled: false,
@@ -250,8 +268,7 @@ const drawHumidityChart = (data, isSingleDay) => {
                     fontSize: "0px",
                 },
             },
-            min: Math.floor(Math.min(...humidity) - 1),
-            max: Math.ceil(Math.max(...humidity) + 1),
+            
         },
         dataLabels: {
             enabled: false,
