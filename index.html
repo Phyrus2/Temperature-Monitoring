@@ -22,15 +22,47 @@
     />
   </head>
   <body>
-    <div class="filter-container">
-      <label for="start-date" class="form-label">Start: </label>
-      <input type="date" id="start-date" class="form-select" />
+    <header class="sticky top-0 z-999 flex w-full shadow-xl bg-white">
+      <div class="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">
+        <div class="flex items-center gap-2 sm:gap-4">
+          <!-- Logo -->
+          <a class="block flex-shrink-0 ml-3" href="index.html">
+            <img src="./pepito-logo.png" alt="Logo" style="width: 90px; height: 50px;" />
+          </a>
+        </div>
+        <div class="hidden sm:block">
+          
+            <div class="relative flex items-center space-x-4">
+              <!-- Date Filter -->
+              <div class="flex items-center space-x-2 mr-4">
+                <label for="start-date" class="form-label text-sm font-medium text-white">Start:</label>
+                <input type="date" id="start-date" class="form-select px-2 py-1 border rounded" />
+                <label for="end-date" class="form-label text-sm font-medium text-white">End:</label>
+                <input type="date" id="end-date" class="form-select px-2 py-1 border rounded" />
+                <button id="filter-button" class="form-select px-3 py-1 bg-green-500 text-white rounded hover:bg-green-800">
+                  Search
+                </button>
+              </div>
+              <!-- End Date Filter -->
+            </div>
+          </form>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-4 lg:hidden">
+          <!-- Hamburger Toggle BTN -->
+          <button
+            class="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
+            @click.stop="sidebarToggle = !sidebarToggle"
+          >
+            <i class="fas fa-bars"></i>
+          </button>
+          <!-- Hamburger Toggle BTN -->
+        </div>
+      </div>
+    </header>
+    
+    
+    
 
-      <label for="end-date" class="form-label">End: </label>
-      <input type="date" id="end-date" class="form-select" />
-
-      <button id="filter-button" class="form-select">Search</button>
-    </div>
 
     <div class="grid gap-4 sm:grid-cols-2 md:grid-cols-4 mt-10 mr-10 ml-10">
       <!-- Card Item for Highest Temperature -->
