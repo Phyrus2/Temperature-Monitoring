@@ -41,24 +41,28 @@ const drawTemperatureChart = (data, isSingleDay) => {
             name: "Temperature",
             data: temperatures,
         }],
-        colors: ["#3C50E0"],
+        colors: ["rgba(255, 0, 0, 0.5)"],
         chart: {
             fontFamily: "Satoshi, sans-serif",
             height: 335,
-            
-            type: "line",
-            dropShadow: {
-                enabled: true,
-                color: "#623CEA14",
-                top: 10,
-                blur: 4,
-                left: 0,
-                opacity: 0.1,
-            },
+            type: "area", // change to area to ensure the fill shows properly
             toolbar: {
                 show: false,
             },
             width: "100%",
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'light',
+                type: "vertical",
+                shadeIntensity: 0.2,
+                gradientToColors: ["#FF0000"], // end color of the gradient to red
+                inverseColors: false,
+                opacityFrom: 0.4, // starting opacity of the fill
+                opacityTo: 0.2,    // ending opacity of the fill
+                stops: [0, 90, 100]
+            }
         },
         responsive: [
             {
@@ -81,11 +85,21 @@ const drawTemperatureChart = (data, isSingleDay) => {
         stroke: {
             width: 2,
             curve: "straight",
+            colors: ["rgba(255, 0, 0, 0.6)"], // Ensure the stroke color matches the series color
+            dropShadow: {
+                enabled: true,
+                top: 0,
+                left: 0,
+                blur: 50, // increased blur for more prominent shadow
+                opacity: 1, // increased opacity for darker shadow
+                color: '#FF0000' // Change shadow color to red
+            }
         },
         markers: {
             size: 4,
             colors: "#fff",
-            strokeColors: ["#3056D3"],
+            
+            strokeColors: ["rgba(255, 0, 0, 0.6)"], // Change marker stroke color to red
             strokeWidth: 3,
             strokeOpacity: 0.9,
             strokeDashArray: 0,
@@ -142,6 +156,8 @@ const drawTemperatureChart = (data, isSingleDay) => {
     }
 };
 
+
+
 const drawHumidityChart = (data, isSingleDay) => {
     const humidity = data.map(row => parseFloat(row.humidity || row.avg_humidity));
     const labels = data.map(row => isSingleDay ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
@@ -151,22 +167,28 @@ const drawHumidityChart = (data, isSingleDay) => {
             name: "Humidity",
             data: humidity,
         }],
-        colors: ["#80CAEE"],
+        colors: ["rgba(0, 128, 0, 0.5)"], // Warna garis hijau dengan opacity 50%
         chart: {
             fontFamily: "Satoshi, sans-serif",
             height: 335,
-            type: "line",
-            dropShadow: {
-                enabled: true,
-                color: "#623CEA14",
-                top: 10,
-                blur: 4,
-                left: 0,
-                opacity: 0.1,
-            },
+            type: "area", // Mengubah tipe grafik menjadi area
             toolbar: {
                 show: false,
             },
+            width: "100%",
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'light',
+                type: "vertical",
+                shadeIntensity: 0.2,
+                gradientToColors: ["#008000"], // Warna akhir gradasi hijau
+                inverseColors: false,
+                opacityFrom: 0.4, // Opasitas awal dari fill
+                opacityTo: 0.2,   // Opasitas akhir dari fill
+                stops: [0, 90, 100]
+            }
         },
         responsive: [
             {
@@ -189,11 +211,20 @@ const drawHumidityChart = (data, isSingleDay) => {
         stroke: {
             width: 2,
             curve: "straight",
+            colors: ["rgba(0, 128, 0, 0.6)"], // Warna garis dengan opacity 60%
+            dropShadow: {
+                enabled: true,
+                top: 0,
+                left: 0,
+                blur: 50, // Blur yang lebih tinggi untuk shadow lebih menonjol
+                opacity: 1, // Opasitas yang lebih tinggi untuk shadow lebih gelap
+                color: '#008000' // Warna shadow hijau
+            }
         },
         markers: {
             size: 4,
             colors: "#fff",
-            strokeColors: ["#80CAEE"],
+            strokeColors: ["rgba(0, 128, 0, 0.6)"], // Warna stroke marker hijau dengan opacity 60%
             strokeWidth: 3,
             strokeOpacity: 0.9,
             strokeDashArray: 0,
@@ -249,6 +280,7 @@ const drawHumidityChart = (data, isSingleDay) => {
         }
     }
 };
+
 
 function renderDetailedTable(data) {
     const tableBody = document.getElementById('data-table-body');
