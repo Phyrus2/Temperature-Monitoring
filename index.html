@@ -20,9 +20,13 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
     />
+
+    
+
+   
   </head>
-  <body>
-    <header class="sticky top-0 z-999 flex w-full shadow-xl bg-white">
+  <body style="background-color: #f6f6f6;" >
+    <header class="sticky top-0 z-999 flex w-full shadow-md bg-white">
       <div class="flex flex-grow items-center justify-between px-4 py-4 md:px-6 2xl:px-11">
         <div class="flex items-center gap-2 sm:gap-4">
           <!-- Logo -->
@@ -34,13 +38,14 @@
           
             <div class="relative flex items-center space-x-4">
               <!-- Date Filter -->
-              <div class="flex items-center space-x-2 mr-4">
+              <div class="flex items-center  mr-4">
                 <label for="start-date" class="form-label text-sm font-medium text-white">Start:</label>
                 <input type="date" id="start-date" class="form-select px-2 py-1 border rounded" />
                 <label for="end-date" class="form-label text-sm font-medium text-white">End:</label>
-                <input type="date" id="end-date" class="form-select px-2 py-1 border rounded" />
+                <input type="date" id="end-date" class="form-select px-2 py-1 border rounded mr-2" />
                 <button id="filter-button" class="form-select px-3 py-1 bg-green-500 text-white rounded hover:bg-green-800">
-                  Search
+                  <i class="fas fa-search "></i>
+                 
                 </button>
               </div>
               <!-- End Date Filter -->
