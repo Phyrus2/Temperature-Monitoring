@@ -22,14 +22,9 @@ document.getElementById('filter-button').addEventListener('click', function() {
     }
 
     if (new Date(startDate) > new Date(endDate)) {
-        displayErrorMessage("End date cannot be earlier than start date.");
-        dateRangeDisplay.innerText = ""; // Clear the date range display on error
-    } else {
-        fetchDataAndDisplay(startDate, endDate);
-        const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
-    }
+        // Alert for end date earlier than start date
+        displayErrorMessage('Invalid Date Range', 'The end date cannot be earlier than the start date.');
+    } 
 });
 
 
@@ -389,7 +384,7 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     console.log("Parsed data:", data); // Log the received data
                     if (isFiltered) {
                         if (data.length === 0) {
-                            displayErrorMessage("No data available for the selected date range.");
+                            displayErrorMessage("Data Not Found","No data available for the selected date range.");
                             var defaultDateRange = getDefaultDateRange();
                             fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
                             return;
@@ -414,11 +409,11 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     
                 } catch (e) {
                     console.error("Error parsing JSON: ", e);
-                    displayErrorMessage("Error parsing JSON data.");
+                    displayErrorMessage("Parsing Error","Error parsing JSON data.");
                 }
             } else {
                 console.error("XHR request failed with status: ", this.status);
-                displayErrorMessage("Failed to fetch data. Status: " + this.status);
+                displayErrorMessage("Data Not Found","Failed to fetch data. Status: " + this.status);
             }
         }
     };
@@ -443,7 +438,7 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     console.log("Parsed data (detailed):", dataDetailed); // Log the received data
                     if (isFiltered) {
                         if (dataDetailed.length === 0) {
-                            displayErrorMessage("No detailed data available for the selected date range.");
+                            displayErrorMessage("Data Not Found","No detailed data available for the selected date range.");
                             var defaultDateRange = getDefaultDateRange();
                             fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
                             return;
@@ -459,11 +454,11 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     
                 } catch (e) {
                     console.error("Error parsing JSON (detailed): ", e);
-                    displayErrorMessage("Error parsing JSON data (detailed).");
+                    displayErrorMessage("Parsing Error","Error parsing JSON data (detailed).");
                 }
             } else {
                 console.error("XHR request for detailed data failed with status: ", this.status);
-                displayErrorMessage("Failed to fetch detailed data. Status: " + this.status);
+                displayErrorMessage("Data Not Found","Failed to fetch detailed data. Status: " + this.status);
             }
         }
     };
@@ -718,33 +713,26 @@ function sendAlertEmail(latestRow, latestDate) {
 }
 
 
-
-
-
-
-
-
- // Display error message in modal
- function displayErrorMessage(message) {
-    const modal = document.getElementById('errorModal');
-    const modalMessage = document.getElementById('modal-message');
-    modalMessage.textContent = message;
-    modal.style.display = 'block';
+function displayErrorMessage(title, message) {
+    Swal.fire({
+        title: title,
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'Ok'
+    });
 }
 
-// Close the modal when the close button is clicked
-document.querySelector('.close').addEventListener('click', function() {
-    const modal = document.getElementById('errorModal');
-    modal.style.display = 'none';
-});
+// Replacing the clearErrorMessage function
+function clearErrorMessage() {
+    // If there's no UI element to clear, you may not need this function.
+    // However, if you had UI elements to clear errors, you'd do it here.
+    console.log('Error message cleared');
+}
 
-// Close the modal when the user clicks outside of it
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('errorModal');
-    if (event.target == modal) {
-        modal.style.display = 'none';
-    }
-});
+
+
+
+
 
 
 // Fetch data and display on initial load
