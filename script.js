@@ -542,6 +542,10 @@ audio.addEventListener('canplaythrough', () => {
     audioReady = true;
 });
 
+
+
+let lastTemperature = null;
+let alertInterval = null;
 function updateStats(data, isSingleDay) {
     if (data.length === 0) return;
 
@@ -553,7 +557,7 @@ function updateStats(data, isSingleDay) {
 
     let temperatureAlertActive = false; // Flag to track if alert is active
 
-    // Cari data dengan timestamp paling baru
+    // Find the latest data row
     let latestRow = null;
     let latestDate = -Infinity;
 
@@ -563,7 +567,6 @@ function updateStats(data, isSingleDay) {
         let date;
 
         if (isSingleDay) {
-            // Assuming row.time_stamp is in HH:MM:SS format and baseDate is YYYY-MM-DD
             const baseDate = new Date().toISOString().split('T')[0];
             date = `${baseDate}T${row.time_stamp}`;
         } else {
@@ -615,18 +618,24 @@ function updateStats(data, isSingleDay) {
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
     document.getElementById("lowest-humidity-date").textContent = formatDate(lowestHumidityDate);
 
-    // Periksa suhu terbaru untuk mengaktifkan alert
+    // Check if the latest temperature exceeds the threshold
     if (latestRow) {
         const latestTemperature = parseFloat(latestRow.temperature || latestRow.avg_temperature);
         temperatureAlertActive = latestTemperature > 30;
     }
 
+    
+
     // Handle temperature alert
-    handleTemperatureAlert(temperatureAlertActive, latestDate);
+    handleTemperatureAlert(temperatureAlertActive, latestRow, latestDate);
 }
 
-function handleTemperatureAlert(isActive, latestDate) {
-    const thirtyMinutes = 30 * 60 * 1000;
+
+
+let emailSent = false; // Flag to ensure the email is only sent once
+
+function handleTemperatureAlert(isActive, latestRow, latestDate) {
+    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes
 
     if (isActive) {
         if (lastAlertTimestamp && (new Date() - lastAlertTimestamp) < thirtyMinutes) {
@@ -638,9 +647,26 @@ function handleTemperatureAlert(isActive, latestDate) {
         }
 
         if (!Swal.isVisible()) {
+            // Extract temperature and date, handling undefined values
+            const temperature = latestRow ? latestRow.temperature || latestRow.avg_temperature : null;
+            const date = latestDate || new Date();
+
+            console.log("Temperature:", temperature);
+            console.log("Date:", date);
+
+            if (!emailSent) {
+                // Send email alert once when the alert is displayed
+                console.log("Sending alert email with the following data:");
+                console.log("Temperature:", temperature);
+                console.log("Date:", date);
+
+                sendAlertEmail(latestRow, latestDate);
+                emailSent = true; // Set the flag to indicate email has been sent
+            }
+
             Swal.fire({
                 title: "Warning!",
-                text: "Temperature exceeds 30 degrees.",
+                text: `Temperature exceeds 30 degrees. Current temperature: ${temperature}°C recorded at ${date}.`,
                 icon: "warning",
                 backdrop: `
                     rgba(255,0,0,0.4)
@@ -656,6 +682,7 @@ function handleTemperatureAlert(isActive, latestDate) {
                 audio.pause();
                 audio.currentTime = 0;
                 lastAlertTimestamp = new Date(); // Update the last alert timestamp
+                emailSent = false; // Reset the email sent flag when alert is closed
             });
         }
     } else {
@@ -664,10 +691,31 @@ function handleTemperatureAlert(isActive, latestDate) {
         if (Swal.isVisible()) {
             Swal.close();
         }
+        emailSent = false; // Reset the flag when the alert is not active
     }
 }
 
-
+function sendAlertEmail(latestRow, latestDate) {
+    fetch('http://localhost:3000/send-alert-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            temperature: latestRow.temperature || latestRow.avg_temperature,
+            date: latestDate,
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to send alert email');
+        }
+        console.log('Alert email sent successfully');
+    })
+    .catch(error => {
+        console.error('Error sending alert email:', error);
+    });
+}
 
 
 

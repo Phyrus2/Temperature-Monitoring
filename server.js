@@ -13,7 +13,8 @@ const app = express();
 const port = 3000;
 app.use(cors());
 const server = http.createServer(app); // Modify this line
-const io = socketIo(server); // Add this line
+const io = socketIo(server); // Add this 
+app.use(express.json());
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -148,6 +149,15 @@ async function generateTable(data) {
 }
 
 
+let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'madeyudaadiwinata@gmail.com',
+        pass: 'yakt dbuj midb bdle'  // Replace with actual password
+    },
+    logger: true,
+    debug: true
+});
 async function sendEmailForPreviousMonth() {
     const now = new Date();
     const currentMonth = now.getMonth(); // Get current month (0-11)
@@ -179,15 +189,7 @@ async function sendEmailForPreviousMonth() {
             const humidityChartBuffer = await generateHumidityChart(results);
             const tableBuffer = await generateTable(results);
 
-            let transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: 'madeyudaadiwinata@gmail.com',
-                    pass: 'yakt dbuj midb bdle'  // Replace with actual password
-                },
-                logger: true,
-                debug: true
-            });
+           
 
             let mailOptions = {
                 from: 'madeyudaadiwinata@gmail.com',
@@ -404,6 +406,27 @@ app.get('/data-by-date', (req, res) => {
 
         notifyClients(formattedResults);
         res.json(formattedResults);
+    });
+});
+
+
+app.post('/send-alert-email', (req, res) => {
+    const { temperature, date } = req.body;
+
+    const mailOptions = {
+        from: 'Temperature Monitoring',
+        to: 'yudamulehensem@gmail.com',
+        subject: 'Temperature Alert',
+        text: `Alert! The latest temperature is ${temperature}°C recorded at ${date}.`
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error('Error sending email:', error);
+            return res.status(500).send('Failed to send email');
+        }
+        console.log('Email sent:', info.response);
+        res.send('Email sent successfully');
     });
 });
 
