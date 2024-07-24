@@ -24,7 +24,14 @@ document.getElementById('filter-button').addEventListener('click', function() {
     if (new Date(startDate) > new Date(endDate)) {
         // Alert for end date earlier than start date
         displayErrorMessage('Invalid Date Range', 'The end date cannot be earlier than the start date.');
-    } 
+        return; // Stop further execution
+    }
+
+    const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
+
+    // Add your logic to fetch and display the filtered data here
 });
 
 
