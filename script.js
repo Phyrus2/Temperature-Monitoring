@@ -103,7 +103,7 @@ const drawTemperatureChart = (data, isSingleDay) => {
         ],
         stroke: {
             width: 2,
-            curve: "straight",
+            curve: "smooth",
             colors: ["rgba(255, 0, 0, 0.6)"], // Ensure the stroke color matches the series color
             dropShadow: {
                 enabled: true,
