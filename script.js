@@ -344,18 +344,19 @@ function renderDetailedTable(data) {
     // Create a row for each date
     Object.keys(groupedData).forEach(date => {
         const divRow = document.createElement('div');
-        divRow.className = "grid grid-cols-7 border-t border-stroke px-4 py-4.5 dark:border-strokedark md:px-6 2xl:px-7.5";
+        divRow.className = "grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5";
 
-        // Create and append the date column
+        // Create and append the date column with right border
         const dateDiv = document.createElement('div');
-        dateDiv.className = "col-span-1 flex items-center";
+        dateDiv.className = "col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark";
         dateDiv.textContent = date;
         divRow.appendChild(dateDiv);
 
-        // Create and append the time slots
-        times.forEach(time => {
+        // Create and append the time slots with right border, except the last one
+        times.forEach((time, index) => {
             const timeDiv = document.createElement('div');
-            timeDiv.className = "col-span-1 flex items-center";
+            // Add a right border to all columns except the last one
+            timeDiv.className = `col-span-1 flex items-center justify-center ${index !== times.length - 1 ? 'border-r' : ''} border-stroke dark:border-strokedark`;
             const dataEntry = groupedData[date][time];
             timeDiv.textContent = `${dataEntry.temperature}/${dataEntry.humidity}`;
             divRow.appendChild(timeDiv);
