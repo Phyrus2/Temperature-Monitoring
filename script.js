@@ -230,7 +230,7 @@ const drawHumidityChart = (data, isSingleDay) => {
         ],
         stroke: {
             width: 2,
-            curve: "straight",
+            curve: "smooth",
             colors: ["rgba(0, 128, 0, 0.6)"], // Warna garis dengan opacity 60%
             dropShadow: {
                 enabled: true,
