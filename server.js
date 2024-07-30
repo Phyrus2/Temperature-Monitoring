@@ -234,7 +234,7 @@ function getMonthName(month) {
 }
 
 // Schedule email sending for the 1st of every month at 8 AM
-cron.schedule('26 10 1 * *', async () => {
+cron.schedule('26 10 1 1 *', async () => {
     try {
         await sendEmailForPreviousMonth();
         console.log('Email sent successfully');
