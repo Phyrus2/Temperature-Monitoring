@@ -8,6 +8,7 @@ const Chart = require('chart.js/auto');  // Import Chart.js
 const cors = require('cors'); // Import cors module
 const http = require('http'); // Add this line
 const socketIo = require('socket.io'); // Add this line
+const { Console } = require('console');
 
 const app = express();
 const port = 3000;
@@ -162,39 +163,53 @@ async function sendEmailForPreviousMonth() {
     const now = new Date();
     const currentMonth = now.getMonth(); // Get current month (0-11)
     const currentYear = now.getFullYear(); // Get current year
-
-    let month = currentMonth;
-    let year = currentYear;
+    let previousMonth;
+    let year;
 
     if (currentMonth === 0) {
         // If current month is January, previous month is December of last year
-        month = 12;
+        previousMonth = 12;
         year = currentYear - 1;
     } else {
         // Previous month is current month - 1
-        month = currentMonth;
+        previousMonth = currentMonth;
+        year = currentYear;
     }
 
-    const sql = `SELECT temperature, humidity, date_stamp FROM stg_incremental_load_rpi 
-                 WHERE MONTH(date_stamp) = ? AND YEAR(date_stamp) = ? ORDER BY date_stamp`;
+    const sql = `
+    SELECT 
+        DATE(date_stamp) as date,
+        AVG(temperature) as avg_temperature,
+        AVG(humidity) as avg_humidity
+    FROM 
+        stg_incremental_load_rpi
+    WHERE 
+        (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+        AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
+    GROUP BY 
+        DATE(date_stamp);
+`;
 
-    db.query(sql, [month, year], async (err, results) => {
+    db.query(sql, [previousMonth, year], async (err, results) => {
         if (err) {
             console.error('Error fetching data for email:', err);
             return;
         }
+        const formattedResults = results.map(row => ({
+            date: row.date,
+            avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
+            avg_humidity: parseFloat(row.avg_humidity).toFixed(2)
+        }));
+
+        console.log(formattedResults);
 
         try {
-            const temperatureChartBuffer = await generateTemperatureChart(results);
-            const humidityChartBuffer = await generateHumidityChart(results);
-            const tableBuffer = await generateTable(results);
-
-           
+            
 
             let mailOptions = {
                 from: 'madeyudaadiwinata@gmail.com',
-                to: 'yudamulehensem@gmail.com, adisuarpala.pepito@gmail.com ',
-                subject: `Monthly Temperature and Humidity Report for ${getMonthName(month)} ${year}`,
+                to: 'yudamulehensem@gmail.com, adisuarpala.pepito@gmail.com',
+                subject: `Monthly Temperature and Humidity Report for ${getMonthName(previousMonth)} ${year}`,
                 text: 'Please find the attached charts and table for the monthly temperature and humidity data.',
                 attachments: [
                     {
@@ -225,12 +240,9 @@ async function sendEmailForPreviousMonth() {
     });
 }
 
-function getMonthName(month) {
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month - 1];  // month is 1-based index
+function getMonthName(monthNumber) {
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return months[monthNumber - 1];
 }
 
 // Schedule email sending for the 1st of every month at 8 AM
@@ -249,6 +261,7 @@ cron.schedule('26 10 1 1 *', async () => {
 app.get('/test-email', async (req, res) => {
     try {
         await sendEmailForPreviousMonth();  // Call email sending function
+        
         res.send('Email sent successfully');
     } catch (error) {
         console.error('Error in test email endpoint:', error);
@@ -309,6 +322,8 @@ app.get('/average-data', (req, res) => {
             avg_humidity: parseFloat(row.avg_humidity).toFixed(2)
         }));
 
+
+        
         notifyClients(formattedResults);
         res.json(formattedResults);
     });
