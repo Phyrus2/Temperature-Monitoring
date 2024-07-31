@@ -129,9 +129,15 @@ async function generateHumidityChart(humidityData, labelsData) {
                 name: "Humidity",
                 data: data,
             }],
+            colors: ["rgba(0, 128, 0, 0.5)"], 
             chart: {
-                type: "line",
-                height: 400,
+                fontFamily: "Satoshi, sans-serif",
+                height: 335,
+                type: "area", // Mengubah tipe grafik menjadi area
+                toolbar: {
+                    show: false,
+                },
+                width: "100%",
                 animations: {
                     enabled: false, // Disable animations for debugging
                 },
@@ -141,35 +147,84 @@ async function generateHumidityChart(humidityData, labelsData) {
                     }
                 }
             },
+            
             xaxis: {
                 type: 'datetime',
                 categories: labels,
                 labels: {
                     format: 'dd MMM'
-                }
+                },
+                axisBorder: {
+                    show: false,
+                },
+                axisTicks: {
+                    show: false,
+                },
+            },
+            yaxis: {
+                title: {
+                    style: {
+                        fontSize: "0px",
+                    },
+                },
+                
             },
             stroke: {
-                curve: 'smooth',
                 width: 2,
-                colors: ["#008000"] // Green color for line
+                curve: "smooth",
+                colors: ["rgba(0, 128, 0, 0.6)"], // Warna garis dengan opacity 60%
+                dropShadow: {
+                    enabled: true,
+                    top: 0,
+                    left: 0,
+                    blur: 50, // Blur yang lebih tinggi untuk shadow lebih menonjol
+                    opacity: 1, // Opasitas yang lebih tinggi untuk shadow lebih gelap
+                    color: '#008000' // Warna shadow hijau
+                }
             },
             fill: {
                 type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.6,
-                    opacityTo: 0.1,
+                    gradient: {
+                    shade: 'light',
+                    type: "vertical",
+                    shadeIntensity: 0.2,
+                    gradientToColors: ["#008000"], // Warna akhir gradasi hijau
+                    inverseColors: false,
+                    opacityFrom: 0.4, // Opasitas awal dari fill
+                    opacityTo: 0.2,   // Opasitas akhir dari fill
                     stops: [0, 90, 100]
                 }
             },
+            responsive: [
+                {
+                    breakpoint: 1024,
+                    options: {
+                        chart: {
+                            height: 300,
+                        },
+                    },
+                },
+                {
+                    breakpoint: 1366,
+                    options: {
+                        chart: {
+                            height: 350,
+                        },
+                    },
+                },
+            ],
             markers: {
                 size: 4,
                 colors: "#fff",
-                strokeColors: ["#008000"],
-                strokeWidth: 2,
+                strokeColors: ["rgba(0, 128, 0, 0.6)"], // Warna stroke marker hijau dengan opacity 60%
+                strokeWidth: 3,
+                strokeOpacity: 0.9,
+                strokeDashArray: 0,
+                fillOpacity: 1,
                 hover: {
-                    size: 7
-                }
+                    size: undefined,
+                    sizeOffset: 5,
+                },
             },
             dataLabels: {
                 enabled: false
@@ -178,7 +233,20 @@ async function generateHumidityChart(humidityData, labelsData) {
                 x: {
                     format: 'dd MMM yyyy'
                 }
-            }
+            },
+            grid: {
+                xaxis: {
+                    lines: {
+                        show: true,
+                    },
+                },
+                yaxis: {
+                    lines: {
+                        show: true,
+                    },
+                },
+            },
+            
         };
 
         try {
