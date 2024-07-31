@@ -78,76 +78,7 @@ async function generateTemperatureChart(data) {
     return canvas.toBuffer();
 }
 
-async function generateHumidityChart(data) {
-    const canvas = createCanvas(1200, 600);
-    const ctx = canvas.getContext('2d');
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.map(row => new Date(row.date_stamp).toISOString().split('T')[0]),  // Format date_stamp
-            datasets: [{
-                label: 'Humidity (%)',
-                data: data.map(row => row.humidity),
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                x: {
-                    display: true
-                },
-                y: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Humidity (%)',
-                    }
-                }
-            }
-        }
-    });
-
-    return canvas.toBuffer();
-}
-
-
-async function generateTable(data) {
-    const browser = await puppeteer.launch({
-        args: ['--no-sandbox'],
-        timeout: 60000 // Increase puppeteer timeout
-    });
-    const page = await browser.newPage();
-    await page.setContent(`
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Temperature (°C)</th>
-                    <th>Humidity (%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${data.map(row => `
-                    <tr>
-                        <td>${new Date(row.date_stamp).toISOString().split('T')[0]}</td>
-                        <td>${row.temperature}</td>
-                        <td>${row.humidity}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `);
-    const pdfBuffer = await page.pdf();
-    await browser.close();
-    return pdfBuffer;
-}
 
 
 let transporter = nodemailer.createTransport({
@@ -159,6 +90,118 @@ let transporter = nodemailer.createTransport({
     logger: true,
     debug: true
 });
+
+
+async function generateHumidityChart(humidityData, labelsData) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    // Convert labels to string format
+    const stringLabels = labelsData.map(date => date.toString());
+
+    console.log('Humidity Data:', humidityData);
+    console.log('Labels Data:', stringLabels);
+
+    await page.setContent(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Humidity Chart</title>
+            <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+        </head>
+        <body>
+            <div id="humidityChart"></div>
+            <script>
+                const options = {
+                    series: [{
+                        name: "Humidity",
+                        data: ${JSON.stringify(humidityData)},
+                    }],
+                    colors: ["rgba(0, 128, 0, 0.5)"],
+                    chart: {
+                        fontFamily: "Satoshi, sans-serif",
+                        height: 335,
+                        type: "area",
+                        toolbar: { show: false },
+                        width: "100%",
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shade: 'light',
+                            type: "vertical",
+                            shadeIntensity: 0.2,
+                            gradientToColors: ["#008000"],
+                            inverseColors: false,
+                            opacityFrom: 0.4,
+                            opacityTo: 0.2,
+                            stops: [0, 90, 100]
+                        }
+                    },
+                    responsive: [
+                        { breakpoint: 1024, options: { chart: { height: 300 } } },
+                        { breakpoint: 1366, options: { chart: { height: 350 } } },
+                    ],
+                    stroke: {
+                        width: 2,
+                        curve: "smooth",
+                        colors: ["rgba(0, 128, 0, 0.6)"],
+                        dropShadow: {
+                            enabled: true,
+                            top: 0,
+                            left: 0,
+                            blur: 50,
+                            opacity: 1,
+                            color: '#008000'
+                        }
+                    },
+                    markers: {
+                        size: 4,
+                        colors: "#fff",
+                        strokeColors: ["rgba(0, 128, 0, 0.6)"],
+                        strokeWidth: 3,
+                        strokeOpacity: 0.9,
+                        strokeDashArray: 0,
+                        fillOpacity: 1,
+                        hover: { size: undefined, sizeOffset: 5 }
+                    },
+                    xaxis: {
+                        type: 'datetime',
+                        categories: ${JSON.stringify(stringLabels)},
+                        axisBorder: { show: false },
+                        axisTicks: { show: false },
+                        labels: {
+                            format: 'yyyy-MM-dd'
+                        }
+                    },
+                    yaxis: {
+                        title: { style: { fontSize: "0px" } },
+                    },
+                    dataLabels: { enabled: false },
+                    grid: {
+                        xaxis: { lines: { show: true } },
+                        yaxis: { lines: { show: true } }
+                    },
+                };
+                const chart = new ApexCharts(document.querySelector("#humidityChart"), options);
+                chart.render();
+            </script>
+        </body>
+        </html>
+    `);
+
+    // Wait for the chart to render
+    await page.waitForSelector('#humidityChart svg');
+
+    // Take a screenshot of the chart
+    const chartBuffer = await page.screenshot({ type: 'png' });
+    await browser.close();
+    return chartBuffer;
+}
+
+
 async function sendEmailForPreviousMonth() {
     const now = new Date();
     const currentMonth = now.getMonth(); // Get current month (0-11)
@@ -188,7 +231,7 @@ async function sendEmailForPreviousMonth() {
         AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
     GROUP BY 
         DATE(date_stamp);
-`;
+    `;
 
     db.query(sql, [previousMonth, year], async (err, results) => {
         if (err) {
@@ -201,29 +244,27 @@ async function sendEmailForPreviousMonth() {
             avg_humidity: parseFloat(row.avg_humidity).toFixed(2)
         }));
 
-        console.log(formattedResults);
+        console.log('Formatted Results:', formattedResults);
 
         try {
-            
+            const humidityData = formattedResults.map(row => row.avg_humidity);
+            const labels = formattedResults.map(row => row.date);
+
+            console.log('Humidity Data:', humidityData);
+            console.log('Labels:', labels);
+
+            const humidityChartBuffer = await generateHumidityChart(humidityData, labels);
 
             let mailOptions = {
                 from: 'madeyudaadiwinata@gmail.com',
-                to: 'yudamulehensem@gmail.com, adisuarpala.pepito@gmail.com',
+                to: 'yudamulehensem@gmail.com',
                 subject: `Monthly Temperature and Humidity Report for ${getMonthName(previousMonth)} ${year}`,
                 text: 'Please find the attached charts and table for the monthly temperature and humidity data.',
                 attachments: [
                     {
-                        filename: 'temperature-chart.png',
-                        content: temperatureChartBuffer
-                    },
-                    {
                         filename: 'humidity-chart.png',
                         content: humidityChartBuffer
                     },
-                    {
-                        filename: 'data-table.pdf',
-                        content: tableBuffer
-                    }
                 ]
             };
 
@@ -239,6 +280,8 @@ async function sendEmailForPreviousMonth() {
         }
     });
 }
+
+
 
 function getMonthName(monthNumber) {
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
