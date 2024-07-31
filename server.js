@@ -132,6 +132,14 @@ async function generateHumidityChart(humidityData, labelsData) {
             chart: {
                 type: "line",
                 height: 400,
+                animations: {
+                    enabled: false, // Disable animations for debugging
+                },
+                events: {
+                    mounted: function(chartContext, config) {
+                        console.log('Chart Mounted:', config);
+                    }
+                }
             },
             xaxis: {
                 type: 'datetime',
@@ -173,8 +181,12 @@ async function generateHumidityChart(humidityData, labelsData) {
             }
         };
 
-        const chart = new ApexCharts(document.querySelector("#humidityChart"), options);
-        chart.render().catch(error => console.error('Error rendering chart:', error));
+        try {
+            const chart = new ApexCharts(document.querySelector("#humidityChart"), options);
+            chart.render().then(() => console.log('Chart rendered')).catch(error => console.error('Error rendering chart:', error));
+        } catch (error) {
+            console.error('Error initializing chart:', error);
+        }
     }, floatHumidityData, stringLabels);
 
     await page.waitForSelector('#humidityChart svg');
