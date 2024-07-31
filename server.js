@@ -96,11 +96,13 @@ async function generateHumidityChart(humidityData, labelsData) {
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
-    // Convert labels to string format
-    const stringLabels = labelsData.map(date => date.toString());
+    page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
-    console.log('Humidity Data:', humidityData);
-    console.log('Labels Data:', stringLabels);
+    const floatHumidityData = humidityData.map(value => parseFloat(value));
+    const stringLabels = labelsData.map(date => new Date(date).toISOString());
+
+    console.log('Formatted Humidity Data:', floatHumidityData);
+    console.log('Formatted Labels Data:', stringLabels);
 
     await page.setContent(`
         <!DOCTYPE html>
@@ -109,97 +111,79 @@ async function generateHumidityChart(humidityData, labelsData) {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Humidity Chart</title>
-            <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
         </head>
         <body>
-            <div id="humidityChart"></div>
-            <script>
-                const options = {
-                    series: [{
-                        name: "Humidity",
-                        data: ${JSON.stringify(humidityData)},
-                    }],
-                    colors: ["rgba(0, 128, 0, 0.5)"],
-                    chart: {
-                        fontFamily: "Satoshi, sans-serif",
-                        height: 335,
-                        type: "area",
-                        toolbar: { show: false },
-                        width: "100%",
-                    },
-                    fill: {
-                        type: 'gradient',
-                        gradient: {
-                            shade: 'light',
-                            type: "vertical",
-                            shadeIntensity: 0.2,
-                            gradientToColors: ["#008000"],
-                            inverseColors: false,
-                            opacityFrom: 0.4,
-                            opacityTo: 0.2,
-                            stops: [0, 90, 100]
-                        }
-                    },
-                    responsive: [
-                        { breakpoint: 1024, options: { chart: { height: 300 } } },
-                        { breakpoint: 1366, options: { chart: { height: 350 } } },
-                    ],
-                    stroke: {
-                        width: 2,
-                        curve: "smooth",
-                        colors: ["rgba(0, 128, 0, 0.6)"],
-                        dropShadow: {
-                            enabled: true,
-                            top: 0,
-                            left: 0,
-                            blur: 50,
-                            opacity: 1,
-                            color: '#008000'
-                        }
-                    },
-                    markers: {
-                        size: 4,
-                        colors: "#fff",
-                        strokeColors: ["rgba(0, 128, 0, 0.6)"],
-                        strokeWidth: 3,
-                        strokeOpacity: 0.9,
-                        strokeDashArray: 0,
-                        fillOpacity: 1,
-                        hover: { size: undefined, sizeOffset: 5 }
-                    },
-                    xaxis: {
-                        type: 'datetime',
-                        categories: ${JSON.stringify(stringLabels)},
-                        axisBorder: { show: false },
-                        axisTicks: { show: false },
-                        labels: {
-                            format: 'yyyy-MM-dd'
-                        }
-                    },
-                    yaxis: {
-                        title: { style: { fontSize: "0px" } },
-                    },
-                    dataLabels: { enabled: false },
-                    grid: {
-                        xaxis: { lines: { show: true } },
-                        yaxis: { lines: { show: true } }
-                    },
-                };
-                const chart = new ApexCharts(document.querySelector("#humidityChart"), options);
-                chart.render();
-            </script>
+            <div id="humidityChart" style="height: 400px;"></div>
         </body>
         </html>
     `);
 
-    // Wait for the chart to render
+    await page.addScriptTag({ url: 'https://cdn.jsdelivr.net/npm/apexcharts' });
+
+    await page.evaluate((data, labels) => {
+        console.log('Humidity Data (in browser):', JSON.stringify(data));
+        console.log('Labels Data (in browser):', JSON.stringify(labels));
+
+        const options = {
+            series: [{
+                name: "Humidity",
+                data: data,
+            }],
+            chart: {
+                type: "line",
+                height: 400,
+            },
+            xaxis: {
+                type: 'datetime',
+                categories: labels,
+                labels: {
+                    format: 'dd MMM'
+                }
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 2,
+                colors: ["#008000"] // Green color for line
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.6,
+                    opacityTo: 0.1,
+                    stops: [0, 90, 100]
+                }
+            },
+            markers: {
+                size: 4,
+                colors: "#fff",
+                strokeColors: ["#008000"],
+                strokeWidth: 2,
+                hover: {
+                    size: 7
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            tooltip: {
+                x: {
+                    format: 'dd MMM yyyy'
+                }
+            }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#humidityChart"), options);
+        chart.render().catch(error => console.error('Error rendering chart:', error));
+    }, floatHumidityData, stringLabels);
+
     await page.waitForSelector('#humidityChart svg');
 
-    // Take a screenshot of the chart
     const chartBuffer = await page.screenshot({ type: 'png' });
     await browser.close();
     return chartBuffer;
 }
+
 
 
 async function sendEmailForPreviousMonth() {
