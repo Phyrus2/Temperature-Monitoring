@@ -33,52 +33,6 @@ db.connect((err) => {
   console.log("Database connected!");
 });
 
-async function generateTemperatureChart(data) {
-  const canvas = createCanvas(1200, 600);
-  const ctx = canvas.getContext("2d");
-
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.map(
-        (row) => new Date(row.date_stamp).toISOString().split("T")[0]
-      ), // Format date_stamp
-      datasets: [
-        {
-          label: "Temperature (°C)",
-          data: data.map((row) => row.temperature),
-          borderColor: "rgba(255, 99, 132, 1)",
-          backgroundColor: "rgba(255, 99, 132, 0.2)",
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        legend: {
-          display: false,
-        },
-      },
-      scales: {
-        x: {
-          display: true,
-          title: {
-            display: true,
-            text: "Date",
-          },
-        },
-        y: {
-          display: true,
-          title: {
-            display: true,
-            text: "Temperature (°C)",
-          },
-        },
-      },
-    },
-  });
-
-  return canvas.toBuffer();
-}
 
 let transporter = nodemailer.createTransport({
   service: "gmail",
@@ -90,16 +44,20 @@ let transporter = nodemailer.createTransport({
   debug: true,
 });
 
-async function generateHumidityChart(humidityData, labelsData) {
+
+
+async function generateCharts(humidityData, temperatureData, labelsData) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
 
   const floatHumidityData = humidityData.map((value) => parseFloat(value));
+  const floatTemperatureData = temperatureData.map((value) => parseFloat(value));
   const stringLabels = labelsData.map((date) => new Date(date).toISOString());
 
   console.log("Formatted Humidity Data:", floatHumidityData);
+  console.log("Formatted Temperature Data:", floatTemperatureData);
   console.log("Formatted Labels Data:", stringLabels);
 
   await page.setContent(`
@@ -108,7 +66,7 @@ async function generateHumidityChart(humidityData, labelsData) {
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Humidity Chart</title>
+            <title>Charts</title>
             <link
       href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
       rel="stylesheet"
@@ -145,7 +103,7 @@ async function generateHumidityChart(humidityData, labelsData) {
             </div>
           </div>
           <div>
-            <div id="chartTemperature" class="-ml-5"></div>
+            <div id="temperatureChart" class="-ml-5"></div>
           </div>
         </div>
       
@@ -171,6 +129,75 @@ async function generateHumidityChart(humidityData, labelsData) {
           </div>
         </div>
       </div>
+      <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark mt-10 ml-10 mr-10 shadow-lg mb-10">
+        <div class="px-4 py-6 md:px-6 xl:px-7.5 bg-yellow-200">
+          <h4 class="text-xl font-bold text-black dark:text-white justify-center items-center flex">Data List</h4>
+        </div>
+      
+        <!-- Table Header -->
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium"></p>
+          </div>
+          <div class="col-span-6 flex items-center justify-center border-stroke dark:border-strokedark">
+            <p class="font-medium">Temperature/Humidity</p>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">Date</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">07:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">10:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">13:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">16:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">19:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center">
+            <p class="font-medium">22:00</p>
+          </div>
+        </div>
+      
+        <!-- Table Body -->
+        <div id="data-table-body">
+          <!-- Rows will be dynamically added here -->
+          <!-- Example for dynamically added row structure -->
+          <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <!-- Date -->
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <!-- 07:00 Data -->
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <!-- 10:00 Data -->
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <!-- 13:00 Data -->
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <!-- 16:00 Data -->
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <!-- 19:00 Data -->
+            </div>
+            <div class="col-span-1 flex items-center justify-center">
+              <!-- 22:00 Data -->
+            </div>
+          </div>
+        </div>
+      </div>
+      
             
         </body>
         </html>
@@ -179,242 +206,245 @@ async function generateHumidityChart(humidityData, labelsData) {
   await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/apexcharts" });
 
   await page.evaluate(
-    (data, labels) => {
-      console.log("Humidity Data (in browser):", JSON.stringify(data));
+    (humidityData, temperatureData, labels) => {
+      console.log("Humidity Data (in browser):", JSON.stringify(humidityData));
+      console.log("Temperature Data (in browser):", JSON.stringify(temperatureData));
       console.log("Labels Data (in browser):", JSON.stringify(labels));
 
-      const options = {
-        series: [
-          {
-            name: "Humidity",
-            data: data,
-          },
-        ],
-        colors: ["rgba(0, 128, 0, 0.5)"],
-        chart: {
-          fontFamily: "Satoshi, sans-serif",
-          height: 335,
-          type: "area", // Mengubah tipe grafik menjadi area
-          toolbar: {
-            show: false,
-          },
-          width: "100%",
-          animations: {
-            enabled: false, // Disable animations for debugging
-          },
-          events: {
-            mounted: function (chartContext, config) {
-              console.log("Chart Mounted:", config);
+      const createChart = (selector, seriesName, data, color) => {
+        const options = {
+          series: [
+            {
+              name: seriesName,
+              data: data,
             },
-          },
-        },
-
-        xaxis: {
-          type: "datetime",
-          categories: labels,
-          labels: {
-            format: "dd MMM",
-          },
-          axisBorder: {
-            show: false,
-          },
-          axisTicks: {
-            show: false,
-          },
-        },
-        yaxis: {
-          title: {
-            style: {
-              fontSize: "0px",
+          ],
+          colors: [color],
+          chart: {
+            fontFamily: "Satoshi, sans-serif",
+            height: 335,
+            type: "area",
+            toolbar: {
+              show: false,
             },
-          },
-        },
-        stroke: {
-          width: 2,
-          curve: "smooth",
-          colors: ["rgba(0, 128, 0, 0.6)"], // Warna garis dengan opacity 60%
-          dropShadow: {
-            enabled: true,
-            top: 0,
-            left: 0,
-            blur: 50, // Blur yang lebih tinggi untuk shadow lebih menonjol
-            opacity: 1, // Opasitas yang lebih tinggi untuk shadow lebih gelap
-            color: "#008000", // Warna shadow hijau
-          },
-        },
-        fill: {
-          type: "gradient",
-          gradient: {
-            shade: "light",
-            type: "vertical",
-            shadeIntensity: 0.2,
-            gradientToColors: ["#008000"], // Warna akhir gradasi hijau
-            inverseColors: false,
-            opacityFrom: 0.4, // Opasitas awal dari fill
-            opacityTo: 0.2, // Opasitas akhir dari fill
-            stops: [0, 90, 100],
-          },
-        },
-        responsive: [
-          {
-            breakpoint: 1024,
-            options: {
-              chart: {
-                height: 300,
+            width: "100%",
+            animations: {
+              enabled: false,
+            },
+            events: {
+              mounted: function (chartContext, config) {
+                console.log("Chart Mounted:", config);
               },
             },
           },
-          {
-            breakpoint: 1366,
-            options: {
-              chart: {
-                height: 350,
-              },
-            },
-          },
-        ],
-        markers: {
-          size: 4,
-          colors: "#fff",
-          strokeColors: ["rgba(0, 128, 0, 0.6)"], // Warna stroke marker hijau dengan opacity 60%
-          strokeWidth: 3,
-          strokeOpacity: 0.9,
-          strokeDashArray: 0,
-          fillOpacity: 1,
-          hover: {
-            size: undefined,
-            sizeOffset: 5,
-          },
-        },
-        dataLabels: {
-          enabled: false,
-        },
-        tooltip: {
-          x: {
-            format: "dd MMM yyyy",
-          },
-        },
-        grid: {
           xaxis: {
-            lines: {
-              show: true,
+            type: "datetime",
+            categories: labels,
+            labels: {
+              format: "dd MMM",
+            },
+            axisBorder: {
+              show: false,
+            },
+            axisTicks: {
+              show: false,
             },
           },
           yaxis: {
-            lines: {
-              show: true,
+            title: {
+              style: {
+                fontSize: "0px",
+              },
             },
           },
-        },
+          stroke: {
+            width: 2,
+            curve: "smooth",
+            colors: [color],
+            dropShadow: {
+              enabled: true,
+              top: 0,
+              left: 0,
+              blur: 50,
+              opacity: 1,
+              color: color,
+            },
+          },
+          fill: {
+            type: "gradient",
+            gradient: {
+              shade: "light",
+              type: "vertical",
+              shadeIntensity: 0.2,
+              gradientToColors: [color],
+              inverseColors: false,
+              opacityFrom: 0.4,
+              opacityTo: 0.2,
+              stops: [0, 90, 100],
+            },
+          },
+          responsive: [
+            {
+              breakpoint: 1024,
+              options: {
+                chart: {
+                  height: 300,
+                },
+              },
+            },
+            {
+              breakpoint: 1366,
+              options: {
+                chart: {
+                  height: 350,
+                },
+              },
+            },
+          ],
+          markers: {
+            size: 4,
+            colors: "#fff",
+            strokeColors: [color],
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+              size: undefined,
+              sizeOffset: 5,
+            },
+          },
+          dataLabels: {
+            enabled: false,
+          },
+          tooltip: {
+            x: {
+              format: "dd MMM yyyy",
+            },
+          },
+          grid: {
+            xaxis: {
+              lines: {
+                show: true,
+              },
+            },
+            yaxis: {
+              lines: {
+                show: true,
+              },
+            },
+          },
+        };
+
+        try {
+          const chart = new ApexCharts(document.querySelector(selector), options);
+          chart
+            .render()
+            .then(() => console.log("Chart rendered"))
+            .catch((error) => console.error("Error rendering chart:", error));
+        } catch (error) {
+          console.error("Error initializing chart:", error);
+        }
       };
 
-      try {
-        const chart = new ApexCharts(
-          document.querySelector("#humidityChart"),
-          options
-        );
-        chart
-          .render()
-          .then(() => console.log("Chart rendered"))
-          .catch((error) => console.error("Error rendering chart:", error));
-      } catch (error) {
-        console.error("Error initializing chart:", error);
-      }
+      createChart("#humidityChart", "Humidity", humidityData, "rgba(0, 128, 0, 0.5)");
+      createChart("#temperatureChart", "Temperature", temperatureData, "rgba(255, 0, 0, 0.5)");
     },
     floatHumidityData,
+    floatTemperatureData,
     stringLabels
   );
 
   await page.waitForSelector("#humidityChart svg");
+  await page.waitForSelector("#temperatureChart svg");
 
   const chartBuffer = await page.screenshot({ type: "png" });
   await browser.close();
   return chartBuffer;
 }
 
+
 async function sendEmailForPreviousMonth() {
-  const now = new Date();
-  const currentMonth = now.getMonth(); // Get current month (0-11)
-  const currentYear = now.getFullYear(); // Get current year
-  let previousMonth;
-  let year;
-
-  if (currentMonth === 0) {
-    // If current month is January, previous month is December of last year
-    previousMonth = 12;
-    year = currentYear - 1;
-  } else {
-    // Previous month is current month - 1
-    previousMonth = currentMonth;
-    year = currentYear;
+    const now = new Date();
+    const currentMonth = now.getMonth(); // Get current month (0-11)
+    const currentYear = now.getFullYear(); // Get current year
+    let previousMonth;
+    let year;
+  
+    if (currentMonth === 0) {
+      // If current month is January, previous month is December of last year
+      previousMonth = 12;
+      year = currentYear - 1;
+    } else {
+      // Previous month is current month - 1
+      previousMonth = currentMonth;
+      year = currentYear;
+    }
+  
+    const sql = `
+      SELECT 
+          DATE(date_stamp) as date,
+          AVG(temperature) as avg_temperature,
+          AVG(humidity) as avg_humidity
+      FROM 
+          stg_incremental_load_rpi
+      WHERE 
+          (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+          AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
+      GROUP BY 
+          DATE(date_stamp);
+      `;
+  
+    db.query(sql, [previousMonth, year], async (err, results) => {
+      if (err) {
+        console.error("Error fetching data for email:", err);
+        return;
+      }
+      const formattedResults = results.map((row) => ({
+        date: row.date,
+        avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
+        avg_humidity: parseFloat(row.avg_humidity).toFixed(2),
+      }));
+  
+      console.log("Formatted Results:", formattedResults);
+  
+      try {
+        const humidityData = formattedResults.map((row) => row.avg_humidity);
+        const temperatureData = formattedResults.map((row) => row.avg_temperature);
+        const labels = formattedResults.map((row) => row.date);
+  
+        console.log("Humidity Data:", humidityData);
+        console.log("Temperature Data:", temperatureData);
+        console.log("Labels:", labels);
+  
+        const chartBuffer = await generateCharts(humidityData, temperatureData, labels);
+  
+        let mailOptions = {
+          from: "madeyudaadiwinata@gmail.com",
+          to: "yudamulehensem@gmail.com",
+          subject: `Monthly Temperature and Humidity Report for ${getMonthName(previousMonth)} ${year}`,
+          text: "Please find the attached charts and table for the monthly temperature and humidity data.",
+          attachments: [
+            {
+              filename: "charts.png",
+              content: chartBuffer,
+            },
+          ],
+        };
+  
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Error sending email:", error);
+            return;
+          }
+          console.log("Email sent: " + info.response);
+        });
+      } catch (error) {
+        console.error("Error generating charts or table:", error);
+      }
+    });
   }
-
-  const sql = `
-    SELECT 
-        DATE(date_stamp) as date,
-        AVG(temperature) as avg_temperature,
-        AVG(humidity) as avg_humidity
-    FROM 
-        stg_incremental_load_rpi
-    WHERE 
-        (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
-        AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
-    GROUP BY 
-        DATE(date_stamp);
-    `;
-
-  db.query(sql, [previousMonth, year], async (err, results) => {
-    if (err) {
-      console.error("Error fetching data for email:", err);
-      return;
-    }
-    const formattedResults = results.map((row) => ({
-      date: row.date,
-      avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
-      avg_humidity: parseFloat(row.avg_humidity).toFixed(2),
-    }));
-
-    console.log("Formatted Results:", formattedResults);
-
-    try {
-      const humidityData = formattedResults.map((row) => row.avg_humidity);
-      const labels = formattedResults.map((row) => row.date);
-
-      console.log("Humidity Data:", humidityData);
-      console.log("Labels:", labels);
-
-      const humidityChartBuffer = await generateHumidityChart(
-        humidityData,
-        labels
-      );
-
-      let mailOptions = {
-        from: "madeyudaadiwinata@gmail.com",
-        to: "yudamulehensem@gmail.com",
-        subject: `Monthly Temperature and Humidity Report for ${getMonthName(
-          previousMonth
-        )} ${year}`,
-        text: "Please find the attached charts and table for the monthly temperature and humidity data.",
-        attachments: [
-          {
-            filename: "humidity-chart.png",
-            content: humidityChartBuffer,
-          },
-        ],
-      };
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Error sending email:", error);
-          return;
-        }
-        console.log("Email sent: " + info.response);
-      });
-    } catch (error) {
-      console.error("Error generating charts or table:", error);
-    }
-  });
-}
+  
 
 function getMonthName(monthNumber) {
   const months = [
