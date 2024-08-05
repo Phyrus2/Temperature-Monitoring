@@ -9,8 +9,8 @@ const cors = require("cors"); // Import cors module
 const http = require("http"); // Add this line
 const socketIo = require("socket.io"); // Add this line
 const { Console } = require("console");
-const PDFDocument = require('pdfkit');
-const htmlToPdf = require('html-pdf');
+const PDFDocument = require("pdfkit");
+const htmlToPdf = require("html-pdf");
 
 const app = express();
 const port = 3000;
@@ -35,7 +35,6 @@ db.connect((err) => {
   console.log("Database connected!");
 });
 
-
 let transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -46,8 +45,6 @@ let transporter = nodemailer.createTransport({
   debug: true,
 });
 
-
-
 async function generateCharts(humidityData, temperatureData, labelsData) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -55,7 +52,9 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
   page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
 
   const floatHumidityData = humidityData.map((value) => parseFloat(value));
-  const floatTemperatureData = temperatureData.map((value) => parseFloat(value));
+  const floatTemperatureData = temperatureData.map((value) =>
+    parseFloat(value)
+  );
   const stringLabels = labelsData.map((date) => new Date(date).toISOString());
 
   console.log("Formatted Humidity Data:", floatHumidityData);
@@ -210,7 +209,10 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
   await page.evaluate(
     (humidityData, temperatureData, labels) => {
       console.log("Humidity Data (in browser):", JSON.stringify(humidityData));
-      console.log("Temperature Data (in browser):", JSON.stringify(temperatureData));
+      console.log(
+        "Temperature Data (in browser):",
+        JSON.stringify(temperatureData)
+      );
       console.log("Labels Data (in browser):", JSON.stringify(labels));
 
       const createChart = (selector, seriesName, data, color) => {
@@ -339,7 +341,10 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
         };
 
         try {
-          const chart = new ApexCharts(document.querySelector(selector), options);
+          const chart = new ApexCharts(
+            document.querySelector(selector),
+            options
+          );
           chart
             .render()
             .then(() => console.log("Chart rendered"))
@@ -349,8 +354,18 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
         }
       };
 
-      createChart("#humidityChart", "Humidity", humidityData, "rgba(0, 128, 0, 0.5)");
-      createChart("#temperatureChart", "Temperature", temperatureData, "rgba(255, 0, 0, 0.5)");
+      createChart(
+        "#humidityChart",
+        "Humidity",
+        humidityData,
+        "rgba(0, 128, 0, 0.5)"
+      );
+      createChart(
+        "#temperatureChart",
+        "Temperature",
+        temperatureData,
+        "rgba(255, 0, 0, 0.5)"
+      );
     },
     floatHumidityData,
     floatTemperatureData,
@@ -365,20 +380,29 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
   return chartBuffer;
 }
 
+// function generatePdfFromHtml(htmlContent) {
+//   return new Promise((resolve, reject) => {
+//       htmlToPdf.create(htmlContent).toBuffer((err, buffer) => {
+//           if (err) {
+//               return reject(err);
+//           }
+//           resolve(buffer);
+//       });
+//   });
+// }
 
-function generatePdfFromHtml(htmlContent) {
-  return new Promise((resolve, reject) => {
-      htmlToPdf.create(htmlContent).toBuffer((err, buffer) => {
-          if (err) {
-              return reject(err);
-          }
-          resolve(buffer);
-      });
-  });
-}
+async function generateHtmlTable(data) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
 
-function generateHtmlTable(data) {
-  const times = ['07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '22:00:00'];
+  const times = [
+    "07:00:00",
+    "10:00:00",
+    "13:00:00",
+    "16:00:00",
+    "19:00:00",
+    "22:00:00",
+  ];
 
   const groupedData = data.reduce((acc, curr) => {
     const date = new Date(curr.date).toLocaleDateString();
@@ -386,50 +410,135 @@ function generateHtmlTable(data) {
 
     if (!acc[date]) {
       acc[date] = {};
-      times.forEach(timeSlot => {
-        acc[date][timeSlot] = { temperature: '-', humidity: '-' };
+      times.forEach((timeSlot) => {
+        acc[date][timeSlot] = { temperature: "-", humidity: "-" };
       });
     }
 
-    // Temukan slot waktu terdekat
     let nearestTimeSlot = times.reduce((prev, currSlot) => {
-      const prevDiff = Math.abs(new Date(`1970-01-01T${prev}Z`).getTime() - new Date(`1970-01-01T${time}Z`).getTime());
-      const currDiff = Math.abs(new Date(`1970-01-01T${currSlot}Z`).getTime() - new Date(`1970-01-01T${time}Z`).getTime());
+      const prevDiff = Math.abs(
+        new Date(`1970-01-01T${prev}Z`).getTime() -
+          new Date(`1970-01-01T${time}Z`).getTime()
+      );
+      const currDiff = Math.abs(
+        new Date(`1970-01-01T${currSlot}Z`).getTime() -
+          new Date(`1970-01-01T${time}Z`).getTime()
+      );
       return currDiff < prevDiff ? currSlot : prev;
     });
 
-    // Masukkan data suhu dan kelembaban ke slot waktu terdekat
     if (nearestTimeSlot) {
       acc[date][nearestTimeSlot] = {
-        temperature: curr.temperature !== null ? curr.temperature : '-',
-        humidity: curr.humidity !== null ? curr.humidity : '-'
+        temperature: curr.temperature !== null ? curr.temperature : "-",
+        humidity: curr.humidity !== null ? curr.humidity : "-",
       };
     }
 
     return acc;
   }, {});
 
-  console.log("Grouped Data:", JSON.stringify(groupedData, null, 2));
+  let tableHtml = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Data Table</title>
+      <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+      
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    </head>
+    <body>
+      <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark mt-10 ml-10 mr-10 shadow-lg mb-10">
+        <div class="px-4 py-6 md:px-6 xl:px-7.5 bg-red-800">
+          <h4 class="text-xl font-bold text-black dark:text-white justify-center items-center flex">Data List</h4>
+        </div>
 
-  let tableHtml = '<div id="data-table-body">';
-  Object.keys(groupedData).forEach(date => {
-    tableHtml += `<div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">`;
-    tableHtml += `<div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">${date}</div>`;
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium"></p>
+          </div>
+          <div class="col-span-6 flex items-center justify-center border-stroke dark:border-strokedark">
+            <p class="font-medium">Temperature/Humidity</p>
+          </div>
+        </div>
 
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">Date</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">07:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">10:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">13:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">16:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">19:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center">
+            <p class="font-medium">22:00</p>
+          </div>
+        </div>
+
+        <div id="data-table-body">
+  `;
+
+  Object.keys(groupedData).forEach((date) => {
+    tableHtml += `
+      <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+        <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+          ${date}
+        </div>`;
     times.forEach((time, index) => {
       const dataEntry = groupedData[date][time];
-      tableHtml += `<div class="col-span-1 flex items-center justify-center ${index !== times.length - 1 ? 'border-r border-stroke dark:border-strokedark' : ''}">`;
-      tableHtml += `${dataEntry.temperature}/${dataEntry.humidity}`;
-      tableHtml += `</div>`;
+      tableHtml += `
+        <div class="col-span-1 flex items-center justify-center ${
+          index !== times.length - 1
+            ? "border-r border-stroke dark:border-strokedark"
+            : ""
+        }">
+          ${dataEntry.temperature}/${dataEntry.humidity}
+        </div>`;
     });
-
     tableHtml += `</div>`;
   });
-  tableHtml += '</div>';
 
-  console.log("Generated Table HTML:", tableHtml);
+  tableHtml += `
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 
-  return tableHtml;
+  if (!tableHtml || typeof tableHtml !== "string" || tableHtml.trim() === "") {
+    throw new Error("The HTML content is either empty or invalid.");
+  }
+
+  await page.setContent(tableHtml);
+
+  // Wait for the content to be fully rendered
+  await page.evaluate(
+    () => new Promise((resolve) => setTimeout(resolve, 1000))
+  );
+
+  const pdfBuffer = await page.pdf({ format: "A4" });
+  await browser.close();
+
+  return pdfBuffer;
 }
 
 async function sendEmailForPreviousMonth() {
@@ -478,8 +587,10 @@ async function sendEmailForPreviousMonth() {
       date_stamp, time_stamp;
   `;
 
-  const startDate = `${year}-${previousMonth.toString().padStart(2, '0')}-01`;
-  const endDate = `${year}-${previousMonth.toString().padStart(2, '0')}-${new Date(year, previousMonth, 0).getDate()}`;
+  const startDate = `${year}-${previousMonth.toString().padStart(2, "0")}-01`;
+  const endDate = `${year}-${previousMonth
+    .toString()
+    .padStart(2, "0")}-${new Date(year, previousMonth, 0).getDate()}`;
 
   db.query(avgSql, [previousMonth, year], async (err, avgResults) => {
     if (err) {
@@ -509,22 +620,28 @@ async function sendEmailForPreviousMonth() {
 
       try {
         const humidityData = formattedAvgResults.map((row) => row.avg_humidity);
-        const temperatureData = formattedAvgResults.map((row) => row.avg_temperature);
+        const temperatureData = formattedAvgResults.map(
+          (row) => row.avg_temperature
+        );
         const labels = formattedAvgResults.map((row) => row.date);
 
         console.log("Humidity Data:", humidityData);
         console.log("Temperature Data:", temperatureData);
         console.log("Labels:", labels);
 
-        const chartBuffer = await generateCharts(humidityData, temperatureData, labels);
-        const htmlTable = generateHtmlTable(formattedDetailResults);
-
-        const pdfBuffer = await generatePdfFromHtml(htmlTable);
+        const chartBuffer = await generateCharts(
+          humidityData,
+          temperatureData,
+          labels
+        );
+        const pdfBuffer = await generateHtmlTable(formattedDetailResults);
 
         let mailOptions = {
           from: "madeyudaadiwinata@gmail.com",
           to: "yudamulehensem@gmail.com",
-          subject: `Monthly Temperature and Humidity Report for ${getMonthName(previousMonth)} ${year}`,
+          subject: `Monthly Temperature and Humidity Report for ${getMonthName(
+            previousMonth
+          )} ${year}`,
           html: `<p>Please find the attached charts and table for the monthly temperature and humidity data.</p>`,
           attachments: [
             {
@@ -551,9 +668,6 @@ async function sendEmailForPreviousMonth() {
     });
   });
 }
-
-
-  
 
 function getMonthName(monthNumber) {
   const months = [
