@@ -457,7 +457,7 @@ async function generateHtmlTable(data) {
     </head>
     <body>
       <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark mt-10 ml-10 mr-10 shadow-lg mb-10">
-        <div class="px-4 py-6 md:px-6 xl:px-7.5 bg-red-800">
+        <div class="px-4 py-6 md:px-6 xl:px-7.5 bg-yellow-200">
           <h4 class="text-xl font-bold text-black dark:text-white justify-center items-center flex">Data List</h4>
         </div>
 
