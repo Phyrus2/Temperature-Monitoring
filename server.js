@@ -9,6 +9,8 @@ const cors = require("cors"); // Import cors module
 const http = require("http"); // Add this line
 const socketIo = require("socket.io"); // Add this line
 const { Console } = require("console");
+const PDFDocument = require('pdfkit');
+const htmlToPdf = require('html-pdf');
 
 const app = express();
 const port = 3000;
@@ -364,74 +366,178 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
 }
 
 
-async function sendEmailForPreviousMonth() {
-    const now = new Date();
-    const currentMonth = now.getMonth(); // Get current month (0-11)
-    const currentYear = now.getFullYear(); // Get current year
-    let previousMonth;
-    let year;
-  
-    if (currentMonth === 0) {
-      // If current month is January, previous month is December of last year
-      previousMonth = 12;
-      year = currentYear - 1;
-    } else {
-      // Previous month is current month - 1
-      previousMonth = currentMonth;
-      year = currentYear;
+function generatePdfFromHtml(htmlContent) {
+  return new Promise((resolve, reject) => {
+      htmlToPdf.create(htmlContent).toBuffer((err, buffer) => {
+          if (err) {
+              return reject(err);
+          }
+          resolve(buffer);
+      });
+  });
+}
+
+function generateHtmlTable(data) {
+  const times = ['07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '22:00:00'];
+
+  const groupedData = data.reduce((acc, curr) => {
+    const date = new Date(curr.date).toLocaleDateString();
+    const time = curr.time;
+
+    if (!acc[date]) {
+      acc[date] = {};
+      times.forEach(timeSlot => {
+        acc[date][timeSlot] = { temperature: '-', humidity: '-' };
+      });
     }
-  
-    const sql = `
-      SELECT 
-          DATE(date_stamp) as date,
-          AVG(temperature) as avg_temperature,
-          AVG(humidity) as avg_humidity
-      FROM 
-          stg_incremental_load_rpi
-      WHERE 
-          (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
-          AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
-      GROUP BY 
-          DATE(date_stamp);
-      `;
-  
-    db.query(sql, [previousMonth, year], async (err, results) => {
+
+    // Temukan slot waktu terdekat
+    let nearestTimeSlot = times.reduce((prev, currSlot) => {
+      const prevDiff = Math.abs(new Date(`1970-01-01T${prev}Z`).getTime() - new Date(`1970-01-01T${time}Z`).getTime());
+      const currDiff = Math.abs(new Date(`1970-01-01T${currSlot}Z`).getTime() - new Date(`1970-01-01T${time}Z`).getTime());
+      return currDiff < prevDiff ? currSlot : prev;
+    });
+
+    // Masukkan data suhu dan kelembaban ke slot waktu terdekat
+    if (nearestTimeSlot) {
+      acc[date][nearestTimeSlot] = {
+        temperature: curr.temperature !== null ? curr.temperature : '-',
+        humidity: curr.humidity !== null ? curr.humidity : '-'
+      };
+    }
+
+    return acc;
+  }, {});
+
+  console.log("Grouped Data:", JSON.stringify(groupedData, null, 2));
+
+  let tableHtml = '<div id="data-table-body">';
+  Object.keys(groupedData).forEach(date => {
+    tableHtml += `<div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">`;
+    tableHtml += `<div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">${date}</div>`;
+
+    times.forEach((time, index) => {
+      const dataEntry = groupedData[date][time];
+      tableHtml += `<div class="col-span-1 flex items-center justify-center ${index !== times.length - 1 ? 'border-r border-stroke dark:border-strokedark' : ''}">`;
+      tableHtml += `${dataEntry.temperature}/${dataEntry.humidity}`;
+      tableHtml += `</div>`;
+    });
+
+    tableHtml += `</div>`;
+  });
+  tableHtml += '</div>';
+
+  console.log("Generated Table HTML:", tableHtml);
+
+  return tableHtml;
+}
+
+async function sendEmailForPreviousMonth() {
+  const now = new Date();
+  const currentMonth = now.getMonth(); // Get current month (0-11)
+  const currentYear = now.getFullYear(); // Get current year
+  let previousMonth;
+  let year;
+
+  if (currentMonth === 0) {
+    // If current month is January, previous month is December of last year
+    previousMonth = 12;
+    year = currentYear - 1;
+  } else {
+    // Previous month is current month - 1
+    previousMonth = currentMonth;
+    year = currentYear;
+  }
+
+  const avgSql = `
+    SELECT 
+      DATE(date_stamp) as date,
+      AVG(temperature) as avg_temperature,
+      AVG(humidity) as avg_humidity
+    FROM 
+      stg_incremental_load_rpi
+    WHERE 
+      (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+      AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
+    GROUP BY 
+      DATE(date_stamp);
+  `;
+
+  const detailSql = `
+    SELECT 
+      date_stamp as date,
+      time_stamp as time,
+      temperature,
+      humidity
+    FROM 
+      stg_incremental_load_rpi
+    WHERE 
+      (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+      AND date_stamp BETWEEN ? AND ?
+    ORDER BY 
+      date_stamp, time_stamp;
+  `;
+
+  const startDate = `${year}-${previousMonth.toString().padStart(2, '0')}-01`;
+  const endDate = `${year}-${previousMonth.toString().padStart(2, '0')}-${new Date(year, previousMonth, 0).getDate()}`;
+
+  db.query(avgSql, [previousMonth, year], async (err, avgResults) => {
+    if (err) {
+      console.error("Error fetching average data for email:", err);
+      return;
+    }
+    const formattedAvgResults = avgResults.map((row) => ({
+      date: row.date,
+      avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
+      avg_humidity: parseFloat(row.avg_humidity).toFixed(2),
+    }));
+
+    db.query(detailSql, [startDate, endDate], async (err, detailResults) => {
       if (err) {
-        console.error("Error fetching data for email:", err);
+        console.error("Error fetching detailed data for email:", err);
         return;
       }
-      const formattedResults = results.map((row) => ({
+      const formattedDetailResults = detailResults.map((row) => ({
         date: row.date,
-        avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
-        avg_humidity: parseFloat(row.avg_humidity).toFixed(2),
+        time: row.time,
+        temperature: parseFloat(row.temperature).toFixed(2),
+        humidity: parseFloat(row.humidity).toFixed(2),
       }));
-  
-      console.log("Formatted Results:", formattedResults);
-  
+
+      console.log("Formatted Average Results:", formattedAvgResults);
+      console.log("Formatted Detailed Results:", formattedDetailResults);
+
       try {
-        const humidityData = formattedResults.map((row) => row.avg_humidity);
-        const temperatureData = formattedResults.map((row) => row.avg_temperature);
-        const labels = formattedResults.map((row) => row.date);
-  
+        const humidityData = formattedAvgResults.map((row) => row.avg_humidity);
+        const temperatureData = formattedAvgResults.map((row) => row.avg_temperature);
+        const labels = formattedAvgResults.map((row) => row.date);
+
         console.log("Humidity Data:", humidityData);
         console.log("Temperature Data:", temperatureData);
         console.log("Labels:", labels);
-  
+
         const chartBuffer = await generateCharts(humidityData, temperatureData, labels);
-  
+        const htmlTable = generateHtmlTable(formattedDetailResults);
+
+        const pdfBuffer = await generatePdfFromHtml(htmlTable);
+
         let mailOptions = {
           from: "madeyudaadiwinata@gmail.com",
           to: "yudamulehensem@gmail.com",
           subject: `Monthly Temperature and Humidity Report for ${getMonthName(previousMonth)} ${year}`,
-          text: "Please find the attached charts and table for the monthly temperature and humidity data.",
+          html: `<p>Please find the attached charts and table for the monthly temperature and humidity data.</p>`,
           attachments: [
             {
               filename: "charts.png",
               content: chartBuffer,
             },
+            {
+              filename: "report.pdf",
+              content: pdfBuffer,
+            },
           ],
         };
-  
+
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             console.error("Error sending email:", error);
@@ -443,7 +549,10 @@ async function sendEmailForPreviousMonth() {
         console.error("Error generating charts or table:", error);
       }
     });
-  }
+  });
+}
+
+
   
 
 function getMonthName(monthNumber) {
