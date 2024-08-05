@@ -11,6 +11,7 @@ const socketIo = require("socket.io"); // Add this line
 const { Console } = require("console");
 const PDFDocument = require("pdfkit");
 const htmlToPdf = require("html-pdf");
+const fs = require('fs'); // Import the fs module
 
 const app = express();
 const port = 3000;
@@ -135,69 +136,9 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
           <h4 class="text-xl font-bold text-black dark:text-white justify-center items-center flex">Data List</h4>
         </div>
       
-        <!-- Table Header -->
-        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium"></p>
-          </div>
-          <div class="col-span-6 flex items-center justify-center border-stroke dark:border-strokedark">
-            <p class="font-medium">Temperature/Humidity</p>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium">Date</p>
-          </div>
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium">07:00</p>
-          </div>
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium">10:00</p>
-          </div>
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium">13:00</p>
-          </div>
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium">16:00</p>
-          </div>
-          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-            <p class="font-medium">19:00</p>
-          </div>
-          <div class="col-span-1 flex items-center justify-center">
-            <p class="font-medium">22:00</p>
-          </div>
-        </div>
+       
       
-        <!-- Table Body -->
-        <div id="data-table-body">
-          <!-- Rows will be dynamically added here -->
-          <!-- Example for dynamically added row structure -->
-          <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
-            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-              <!-- Date -->
-            </div>
-            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-              <!-- 07:00 Data -->
-            </div>
-            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-              <!-- 10:00 Data -->
-            </div>
-            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-              <!-- 13:00 Data -->
-            </div>
-            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-              <!-- 16:00 Data -->
-            </div>
-            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
-              <!-- 19:00 Data -->
-            </div>
-            <div class="col-span-1 flex items-center justify-center">
-              <!-- 22:00 Data -->
-            </div>
-          </div>
-        </div>
-      </div>
+        
       
             
         </body>
@@ -541,6 +482,355 @@ async function generateHtmlTable(data) {
   return pdfBuffer;
 }
 
+
+async function generatePdf(humidityData, temperatureData, labelsData, tableData) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+
+  const floatHumidityData = humidityData.map((value) => parseFloat(value));
+  const floatTemperatureData = temperatureData.map((value) => parseFloat(value));
+  const stringLabels = labelsData.map((date) => new Date(date).toISOString());
+
+  const times = [
+    "07:00:00",
+    "10:00:00",
+    "13:00:00",
+    "16:00:00",
+    "19:00:00",
+    "22:00:00",
+  ];
+
+  const groupedData = tableData.reduce((acc, curr) => {
+    const date = new Date(curr.date).toLocaleDateString();
+    const time = curr.time;
+
+    if (!acc[date]) {
+      acc[date] = {};
+      times.forEach((timeSlot) => {
+        acc[date][timeSlot] = { temperature: "-", humidity: "-" };
+      });
+    }
+
+    let nearestTimeSlot = times.reduce((prev, currSlot) => {
+      const prevDiff = Math.abs(
+        new Date(`1970-01-01T${prev}Z`).getTime() -
+        new Date(`1970-01-01T${time}Z`).getTime()
+      );
+      const currDiff = Math.abs(
+        new Date(`1970-01-01T${currSlot}Z`).getTime() -
+        new Date(`1970-01-01T${time}Z`).getTime()
+      );
+      return currDiff < prevDiff ? currSlot : prev;
+    });
+
+    if (nearestTimeSlot) {
+      acc[date][nearestTimeSlot] = {
+        temperature: curr.temperature !== null ? curr.temperature : "-",
+        humidity: curr.humidity !== null ? curr.humidity : "-",
+      };
+    }
+
+    return acc;
+  }, {});
+
+  let tableHtml = `
+    <div class="table-container">
+      <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark shadow-lg">
+        <div class="px-4 py-6 md:px-6 xl:px-7.5 bg-yellow-200">
+          <h4 class="text-xl font-bold text-black dark:text-white justify-center items-center flex">Data List</h4>
+        </div>
+
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark text-sm">
+            <p class="font-medium"></p>
+          </div>
+          <div class="col-span-6 flex items-center justify-center border-stroke dark:border-strokedark text-sm">
+            <p class="font-medium">Temperature/Humidity</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5 text-sm">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">Date</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">07:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">10:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">13:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">16:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            <p class="font-medium">19:00</p>
+          </div>
+          <div class="col-span-1 flex items-center justify-center">
+            <p class="font-medium">22:00</p>
+          </div>
+        </div>
+
+        <div id="data-table-body">`;
+
+  Object.keys(groupedData).forEach((date) => {
+    tableHtml += `
+      <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5 text-sm">
+        <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+          ${date}
+        </div>`;
+    times.forEach((time, index) => {
+      const dataEntry = groupedData[date][time];
+      tableHtml += `
+        <div class="col-span-1 flex items-center justify-center ${
+          index !== times.length - 1
+            ? "border-r border-stroke dark:border-strokedark"
+            : ""
+        }">
+          ${dataEntry.temperature}/${dataEntry.humidity}
+        </div>`;
+    });
+    tableHtml += `</div>`;
+  });
+
+  tableHtml += `
+        </div>
+      </div>
+    </div>`;
+
+await page.setContent(`
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Report</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+  <style>
+    .container {
+      width: 100%;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="font-sans">
+  <div class="container p-0">
+    <h1 class="text-2xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
+    <h2 class="text-center mb-8">JUNE 2024 PERIOD</h2>
+
+    <div class="flex">
+      <div class=" w-1/2 ">
+        ${tableHtml}
+      </div>
+
+      <div class="flex flex-col w-1/2 ">
+        <!-- Temperature Chart -->
+        <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg 
+          dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+          
+      
+          <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+            <div class="flex w-full flex-wrap gap-3 sm:gap-5">
+              <div class="flex min-w-47.5"></div>
+            </div>
+          </div>
+          <div>
+            <div id="temperatureChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Humidity Chart -->
+        <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+         
+      
+          <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+            <div class="flex w-full flex-wrap gap-3 sm:gap-5">
+              <div class="flex min-w-47.5"></div>
+            </div>
+          </div>
+          <div>
+            <div id="humidityChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+`);
+
+    
+    
+
+  await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/apexcharts" });
+
+  await page.evaluate(
+    (humidityData, temperatureData, labels) => {
+      const createChart = (selector, seriesName, data, color) => {
+        const options = {
+          series: [
+            {
+              name: seriesName,
+              data: data,
+            },
+          ],
+          colors: [color],
+          chart: {
+            fontFamily: "Satoshi, sans-serif",
+            height: 335,
+            type: "area",
+            toolbar: {
+              show: false,
+            },
+            width: "100%",
+            animations: {
+              enabled: false,
+            },
+            events: {
+              mounted: function (chartContext, config) {
+                console.log("Chart Mounted:", config);
+              },
+            },
+          },
+          xaxis: {
+            type: "datetime",
+            categories: labels,
+            labels: {
+              format: "dd MMM",
+            },
+            axisBorder: {
+              show: false,
+            },
+            axisTicks: {
+              show: false,
+            },
+          },
+          yaxis: {
+            title: {
+              style: {
+                fontSize: "0px",
+              },
+            },
+          },
+          stroke: {
+            width: 2,
+            curve: "smooth",
+            colors: [color],
+            dropShadow: {
+              enabled: true,
+              top: 0,
+              left: 0,
+              blur: 50,
+              opacity: 1,
+              color: color,
+            },
+          },
+          fill: {
+            type: "gradient",
+            gradient: {
+              shade: "light",
+              type: "vertical",
+              shadeIntensity: 0.2,
+              gradientToColors: [color],
+              inverseColors: false,
+              opacityFrom: 0.4,
+              opacityTo: 0.2,
+              stops: [0, 90, 100],
+            },
+          },
+          responsive: [
+            {
+              breakpoint: 1024,
+              options: {
+                chart: {
+                  height: 300,
+                },
+              },
+            },
+            {
+              breakpoint: 1366,
+              options: {
+                chart: {
+                  height: 350,
+                },
+              },
+            },
+          ],
+          markers: {
+            size: 4,
+            colors: "#fff",
+            strokeColors: [color],
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+              size: undefined,
+              sizeOffset: 5,
+            },
+          },
+
+          dataLabels: {
+            enabled: false,
+          },
+          tooltip: {
+            x: {
+              format: "dd MMM yyyy",
+            },
+          },
+          grid: {
+            xaxis: {
+              lines: {
+                show: true,
+              },
+            },
+            yaxis: {
+              lines: {
+                show: true,
+              },
+            },
+          },
+        };
+
+        const chart = new ApexCharts(document.querySelector(selector), options);
+        chart.render();
+      };
+
+      createChart(
+        "#humidityChart",
+        "Humidity",
+        humidityData,
+        "rgba(0, 128, 0, 0.5)"
+      );
+      createChart(
+        "#temperatureChart",
+        "Temperature",
+        temperatureData,
+        "rgba(255, 0, 0, 0.5)"
+      );
+    },
+    floatHumidityData,
+    floatTemperatureData,
+    stringLabels
+  );
+
+  await page.pdf({
+    path: "./combined_chart_table.pdf",
+    format: "A4",
+    landscape: true,
+    printBackground: true,
+  });
+
+  await browser.close();
+}
+
+
 async function sendEmailForPreviousMonth() {
   const now = new Date();
   const currentMonth = now.getMonth(); // Get current month (0-11)
@@ -629,12 +919,9 @@ async function sendEmailForPreviousMonth() {
         console.log("Temperature Data:", temperatureData);
         console.log("Labels:", labels);
 
-        const chartBuffer = await generateCharts(
-          humidityData,
-          temperatureData,
-          labels
-        );
-        const pdfBuffer = await generateHtmlTable(formattedDetailResults);
+        await generatePdf(humidityData, temperatureData, labels, formattedDetailResults);
+
+        const pdfBuffer = await fs.promises.readFile('./combined_chart_table.pdf');
 
         let mailOptions = {
           from: "madeyudaadiwinata@gmail.com",
@@ -645,13 +932,10 @@ async function sendEmailForPreviousMonth() {
           html: `<p>Please find the attached charts and table for the monthly temperature and humidity data.</p>`,
           attachments: [
             {
-              filename: "charts.png",
-              content: chartBuffer,
-            },
-            {
               filename: "report.pdf",
               content: pdfBuffer,
-            },
+              contentType: 'application/pdf'
+            }
           ],
         };
 
@@ -663,11 +947,12 @@ async function sendEmailForPreviousMonth() {
           console.log("Email sent: " + info.response);
         });
       } catch (error) {
-        console.error("Error generating charts or table:", error);
+        console.error("Error generating PDF or sending email:", error);
       }
     });
   });
 }
+
 
 function getMonthName(monthNumber) {
   const months = [
