@@ -822,21 +822,23 @@ async function generatePdf(
   await browser.close();
 }
 
-async function sendEmailForPreviousMonth() {
+async function sendEmailForPreviousMonth(testMonth = null, testYear = null) {
   const now = new Date();
-  const currentMonth = now.getMonth(); // Get current month (0-11)
+  const currentMonth = now.getMonth() + 1; // Get current month (1-12)
   const currentYear = now.getFullYear(); // Get current year
-  let previousMonth;
-  let year;
+  let previousMonth = testMonth;
+  let year = testYear;
 
-  if (currentMonth === 0) {
-    // If current month is January, previous month is December of last year
-    previousMonth = 12;
-    year = currentYear - 1;
-  } else {
-    // Previous month is current month - 1
-    previousMonth = currentMonth;
-    year = currentYear;
+  if (!testMonth || !testYear) {
+    if (currentMonth === 1) {
+      // If current month is January, previous month is December of last year
+      previousMonth = 12;
+      year = currentYear - 1;
+    } else {
+      // Previous month is current month - 1
+      previousMonth = currentMonth - 1;
+      year = currentYear;
+    }
   }
 
   const avgSql = `
@@ -988,7 +990,7 @@ cron.schedule(
 // Endpoint for testing email sending
 app.get("/test-email", async (req, res) => {
   try {
-    await sendEmailForPreviousMonth(); // Call email sending function
+    await sendEmailForPreviousMonth(5, 2024); // Call email sending function
 
     res.send("Email sent successfully");
   } catch (error) {
