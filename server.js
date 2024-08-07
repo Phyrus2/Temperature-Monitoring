@@ -475,7 +475,9 @@ async function generatePdf(
   humidityData,
   temperatureData,
   labelsData,
-  tableData
+  tableData,
+  month,
+  year,
   ){
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -615,8 +617,8 @@ async function generatePdf(
             </head>
             <body class="font-sans">
               <div class="container p-0">
-                <h1 class="text-2xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
-                <h2 class="text-center mb-8">JUNE 2024 PERIOD</h2>
+                <h1 class="text-4xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
+                <h2 class="text-center mb-8 text-xl uppercase">${month} ${year} PERIOD</h2>
 
                 <div class="flex">
                   <div class=" w-1/2 ml-10">
@@ -912,11 +914,15 @@ async function sendEmailForPreviousMonth(testMonth = null, testYear = null) {
         console.log("Temperature Data:", temperatureData);
         console.log("Labels:", labels);
 
+
+        const monthName = getMonthName(previousMonth);
         await generatePdf(
           humidityData,
           temperatureData,
           labels,
-          formattedDetailResults
+          formattedDetailResults,
+          monthName,
+          year
         );
 
         const pdfBuffer = await fs.promises.readFile(
@@ -990,7 +996,7 @@ cron.schedule(
 // Endpoint for testing email sending
 app.get("/test-email", async (req, res) => {
   try {
-    await sendEmailForPreviousMonth(5, 2024); // Call email sending function
+    await sendEmailForPreviousMonth(4, 2024); // Call email sending function
 
     res.send("Email sent successfully");
   } catch (error) {
