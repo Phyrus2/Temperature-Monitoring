@@ -619,11 +619,11 @@ async function generatePdf(
                 <h2 class="text-center mb-8">JUNE 2024 PERIOD</h2>
 
                 <div class="flex">
-                  <div class=" w-1/2 ">
+                  <div class=" w-1/2 ml-10">
                     ${tableHtml}
                   </div>
 
-                  <div class="flex flex-col w-1/2 ">
+                  <div class="flex flex-col w-1/2 mr-10 ">
                     <!-- Temperature Chart -->
                     <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg 
                       dark:border-strokedark dark:bg-boxdark sm:px-7.5">
@@ -675,12 +675,12 @@ async function generatePdf(
           colors: [color],
           chart: {
             fontFamily: "Satoshi, sans-serif",
-            height: 335,
             type: "area",
             toolbar: {
               show: false,
             },
-            width: "100%",
+            width: "500px", // Set width to 100%
+            height: 'auto', // Set height to auto
             animations: {
               enabled: false,
             },
@@ -767,7 +767,6 @@ async function generatePdf(
               sizeOffset: 5,
             },
           },
-
           dataLabels: {
             enabled: false,
           },
@@ -789,10 +788,11 @@ async function generatePdf(
             },
           },
         };
-
+      
         const chart = new ApexCharts(document.querySelector(selector), options);
         chart.render();
       };
+      
 
       createChart(
         "#humidityChart",
