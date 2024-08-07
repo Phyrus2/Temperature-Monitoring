@@ -11,7 +11,7 @@ const socketIo = require("socket.io"); // Add this line
 const { Console } = require("console");
 const PDFDocument = require("pdfkit");
 const htmlToPdf = require("html-pdf");
-const fs = require('fs'); // Import the fs module
+const fs = require("fs"); // Import the fs module
 
 const app = express();
 const port = 3000;
@@ -321,17 +321,6 @@ async function generateCharts(humidityData, temperatureData, labelsData) {
   return chartBuffer;
 }
 
-// function generatePdfFromHtml(htmlContent) {
-//   return new Promise((resolve, reject) => {
-//       htmlToPdf.create(htmlContent).toBuffer((err, buffer) => {
-//           if (err) {
-//               return reject(err);
-//           }
-//           resolve(buffer);
-//       });
-//   });
-// }
-
 async function generateHtmlTable(data) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -482,15 +471,21 @@ async function generateHtmlTable(data) {
   return pdfBuffer;
 }
 
-
-async function generatePdf(humidityData, temperatureData, labelsData, tableData) {
+async function generatePdf(
+  humidityData,
+  temperatureData,
+  labelsData,
+  tableData
+  ){
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
 
   page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
 
   const floatHumidityData = humidityData.map((value) => parseFloat(value));
-  const floatTemperatureData = temperatureData.map((value) => parseFloat(value));
+  const floatTemperatureData = temperatureData.map((value) =>
+    parseFloat(value)
+  );
   const stringLabels = labelsData.map((date) => new Date(date).toISOString());
 
   const times = [
@@ -516,11 +511,11 @@ async function generatePdf(humidityData, temperatureData, labelsData, tableData)
     let nearestTimeSlot = times.reduce((prev, currSlot) => {
       const prevDiff = Math.abs(
         new Date(`1970-01-01T${prev}Z`).getTime() -
-        new Date(`1970-01-01T${time}Z`).getTime()
+          new Date(`1970-01-01T${time}Z`).getTime()
       );
       const currDiff = Math.abs(
         new Date(`1970-01-01T${currSlot}Z`).getTime() -
-        new Date(`1970-01-01T${time}Z`).getTime()
+          new Date(`1970-01-01T${time}Z`).getTime()
       );
       return currDiff < prevDiff ? currSlot : prev;
     });
@@ -602,71 +597,68 @@ async function generatePdf(humidityData, temperatureData, labelsData, tableData)
       </div>
     </div>`;
 
-await page.setContent(`
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Report</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-  <style>
-    .container {
-      width: 100%;
-      max-width: 100%;
-    }
-  </style>
-</head>
-<body class="font-sans">
-  <div class="container p-0">
-    <h1 class="text-2xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
-    <h2 class="text-center mb-8">JUNE 2024 PERIOD</h2>
+  await page.setContent(`
+              <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Data Report</title>
+              <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+              <style>
+                .container {
+                  width: 100%;
+                  max-width: 100%;
+                }
+              </style>
+            </head>
+            <body class="font-sans">
+              <div class="container p-0">
+                <h1 class="text-2xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
+                <h2 class="text-center mb-8">JUNE 2024 PERIOD</h2>
 
-    <div class="flex">
-      <div class=" w-1/2 ">
-        ${tableHtml}
-      </div>
+                <div class="flex">
+                  <div class=" w-1/2 ">
+                    ${tableHtml}
+                  </div>
 
-      <div class="flex flex-col w-1/2 ">
-        <!-- Temperature Chart -->
-        <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg 
-          dark:border-strokedark dark:bg-boxdark sm:px-7.5">
-          
-      
-          <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-            <div class="flex w-full flex-wrap gap-3 sm:gap-5">
-              <div class="flex min-w-47.5"></div>
-            </div>
-          </div>
-          <div>
-            <div id="temperatureChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
-          </div>
-        </div>
+                  <div class="flex flex-col w-1/2 ">
+                    <!-- Temperature Chart -->
+                    <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg 
+                      dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+                      
+                  
+                      <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+                        <div class="flex w-full flex-wrap gap-3 sm:gap-5">
+                          <div class="flex min-w-47.5"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div id="temperatureChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
+                      </div>
+                    </div>
 
-        <!-- Humidity Chart -->
-        <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg dark:border-strokedark dark:bg-boxdark sm:px-7.5">
-         
-      
-          <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
-            <div class="flex w-full flex-wrap gap-3 sm:gap-5">
-              <div class="flex min-w-47.5"></div>
-            </div>
-          </div>
-          <div>
-            <div id="humidityChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
+                    <!-- Humidity Chart -->
+                    <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5  pt-7.5 shadow-lg dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+                    
+                  
+                      <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+                        <div class="flex w-full flex-wrap gap-3 sm:gap-5">
+                          <div class="flex min-w-47.5"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div id="humidityChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </body>
+            </html>
 
 `);
-
-    
-    
 
   await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/apexcharts" });
 
@@ -830,7 +822,6 @@ await page.setContent(`
   await browser.close();
 }
 
-
 async function sendEmailForPreviousMonth() {
   const now = new Date();
   const currentMonth = now.getMonth(); // Get current month (0-11)
@@ -919,9 +910,16 @@ async function sendEmailForPreviousMonth() {
         console.log("Temperature Data:", temperatureData);
         console.log("Labels:", labels);
 
-        await generatePdf(humidityData, temperatureData, labels, formattedDetailResults);
+        await generatePdf(
+          humidityData,
+          temperatureData,
+          labels,
+          formattedDetailResults
+        );
 
-        const pdfBuffer = await fs.promises.readFile('./combined_chart_table.pdf');
+        const pdfBuffer = await fs.promises.readFile(
+          "./combined_chart_table.pdf"
+        );
 
         let mailOptions = {
           from: "madeyudaadiwinata@gmail.com",
@@ -934,8 +932,8 @@ async function sendEmailForPreviousMonth() {
             {
               filename: "report.pdf",
               content: pdfBuffer,
-              contentType: 'application/pdf'
-            }
+              contentType: "application/pdf",
+            },
           ],
         };
 
@@ -952,7 +950,6 @@ async function sendEmailForPreviousMonth() {
     });
   });
 }
-
 
 function getMonthName(monthNumber) {
   const months = [
