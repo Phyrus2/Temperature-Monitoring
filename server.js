@@ -574,7 +574,7 @@ async function generatePdf(
 
   Object.keys(groupedData).forEach((date) => {
     tableHtml += `
-      <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5 text-sm">
+      <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5 text-xs">
         <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
           ${date}
         </div>`;
