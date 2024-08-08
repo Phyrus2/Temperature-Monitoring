@@ -681,7 +681,7 @@ async function generatePdf(
             toolbar: {
               show: false,
             },
-            width: "500px", // Set width to 100%
+            width: "100%", // Set width to 100%
             height: 'auto', // Set height to auto
             animations: {
               enabled: false,
