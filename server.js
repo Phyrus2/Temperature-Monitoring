@@ -789,13 +789,30 @@ async function generatePdf(
               },
             },
           },
+          legend: {
+            show: true,
+            position: 'top', // or 'bottom'
+            horizontalAlign: 'center', // or 'left', 'right'
+            verticalAlign: 'middle', // or 'top', 'bottom'
+            floating: false,
+            fontSize: '14px',
+            fontFamily: 'Satoshi, sans-serif',
+            offsetY: 0,
+            labels: {
+              colors: '#000',
+              useSeriesColors: true,
+            },
+            itemMargin: {
+              horizontal: 10,
+              vertical: 5,
+            },
+          },
         };
       
         const chart = new ApexCharts(document.querySelector(selector), options);
         chart.render();
       };
-      
-
+  
       createChart(
         "#humidityChart",
         "Humidity",
@@ -813,6 +830,7 @@ async function generatePdf(
     floatTemperatureData,
     stringLabels
   );
+  
 
   await page.pdf({
     path: "./combined_chart_table.pdf",
