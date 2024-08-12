@@ -419,8 +419,8 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                     displayErrorMessage("Parsing Error","Error parsing JSON data.");
                 }
             } else {
-                console.error("XHR request failed with status: ", this.status);
-                displayErrorMessage("Data Not Found","Failed to fetch data. Status: " + this.status);
+                console.error("XHR request failed with status: ");
+                displayErrorMessage("Data Not Found","Failed to fetch data.");
             }
         }
     };
@@ -656,11 +656,22 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
             console.log("Temperature:", temperature);
             console.log("Date:", date);
 
+            // Format the date as per the new requirements
+            const formattedDate = new Date(date).toLocaleString('en-US', {
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            }).replace(/:\d{2}\s/, ' '); // Removes the minutes part.
+
             if (!emailSent) {
                 // Send email alert once when the alert is displayed
                 console.log("Sending alert email with the following data:");
                 console.log("Temperature:", temperature);
-                console.log("Date:", date);
+                console.log("Date:", formattedDate);
 
                 sendAlertEmail(latestRow, latestDate);
                 emailSent = true; // Set the flag to indicate email has been sent
@@ -668,7 +679,13 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
 
             Swal.fire({
                 title: "Warning!",
-                text: `Temperature exceeds 30 degrees. Current temperature: ${temperature}°C recorded at ${date}.`,
+                html: `
+                    <div style="text-align: center;">
+                        <p>Temperature exceeds 30 degrees</p>
+                        <p>Current temperature: ${temperature}°C</p>
+                        <p>Recorded at ${formattedDate}</p>
+                    </div>
+                `,
                 icon: "warning",
                 backdrop: `
                     rgba(255,0,0,0.4)
@@ -696,6 +713,7 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
         emailSent = false; // Reset the flag when the alert is not active
     }
 }
+
 
 function sendAlertEmail(latestRow, latestDate) {
     fetch('http://localhost:3000/send-alert-email', {
