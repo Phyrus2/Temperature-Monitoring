@@ -783,9 +783,7 @@ function displayErrorMessage(title, message, callback) {
 }
 
 // Replacing the clearErrorMessage function
-function clearErrorMessage() {
-    errorDisplayed = false;
-}
+
 
 
 
