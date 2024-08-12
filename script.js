@@ -1,12 +1,17 @@
 let chart;
+let errorDisplayed = false; // Flag to track if an error has been displayed
+let lastValidStartDate, lastValidEndDate; // Variables to store the last valid date range
+let hasError = false;
 
 document.addEventListener('DOMContentLoaded', (event) => {
     const defaultDateRange = getDefaultDateRange();
-    fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
+    lastValidStartDate = defaultDateRange.startDate;
+    lastValidEndDate = defaultDateRange.endDate;
+    fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
+
     setInterval(() => {
-        const startDate = document.getElementById('start-date').value || defaultDateRange.startDate;
-        const endDate = document.getElementById('end-date').value || defaultDateRange.endDate;
-        fetchDataAndDisplay(startDate, endDate);
+        // Use the last valid date range for interval fetching
+        fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
     }, 5000);
 });
 
@@ -16,22 +21,25 @@ document.getElementById('filter-button').addEventListener('click', function() {
     const dateRangeDisplay = document.getElementById('date-range-display');
 
     if (!startDate || !endDate) {
-        const defaultDates = getDefaultDateRange();
-        startDate = defaultDates.startDate;
-        endDate = defaultDates.endDate;
+        displayErrorMessage('Invalid Date Range', 'Please select both start and end dates.');
+        return;
     }
 
     if (new Date(startDate) > new Date(endDate)) {
-        // Alert for end date earlier than start date
-        displayErrorMessage('Invalid Date Range', 'The end date cannot be earlier than the start date.');
-        return; // Stop further execution
+        displayErrorMessage('Invalid Date Range', 'The end date cannot be earlier than the start date.', resetToDefaultDateRange);
+        return;
     }
 
     const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
 
-    // Add your logic to fetch and display the filtered data here
+    // Store the valid date range in the variables
+    lastValidStartDate = startDate;
+    lastValidEndDate = endDate;
+
+    // Fetch and display the filtered data based on user input
+    fetchDataAndDisplay(startDate, endDate);
 });
 
 
@@ -420,7 +428,9 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
                 }
             } else {
                 console.error("XHR request failed with status: ");
-                displayErrorMessage("Data Not Found","Failed to fetch data.");
+                displayErrorMessage("Data Not Found","Failed to fetch data.", resetToDefaultDateRange);
+                
+                
             }
         }
     };
@@ -503,6 +513,23 @@ function clearErrorMessage() {
     }
 }
 
+function resetToDefaultDateRange() {
+    const defaultDateRange = getDefaultDateRange();
+    document.getElementById('start-date').value = defaultDateRange.startDate;
+    document.getElementById('end-date').value = defaultDateRange.endDate;
+
+    // Update the date range display with the default dates
+    const formattedStartDate = new Date(defaultDateRange.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedEndDate = new Date(defaultDateRange.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('date-range-display').innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
+
+    // Update the global last valid date range variables
+    lastValidStartDate = defaultDateRange.startDate;
+    lastValidEndDate = defaultDateRange.endDate;
+
+    // Fetch and display the data for the default date range
+    fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
+}
 
 
 function getDefaultDateRange() {
@@ -738,20 +765,26 @@ function sendAlertEmail(latestRow, latestDate) {
 }
 
 
-function displayErrorMessage(title, message) {
-    Swal.fire({
-        title: title,
-        text: message,
-        icon: 'error',
-        confirmButtonText: 'Ok'
-    });
+function displayErrorMessage(title, message, callback) {
+    if (!errorDisplayed) { 
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'Ok'
+        }).then(() => {
+            errorDisplayed = false; // Reset the flag when the alert is closed
+            if (callback) {
+                callback(); // Execute the callback function if provided
+            }
+        });
+        errorDisplayed = true; // Set the flag to prevent further alerts
+    }
 }
 
 // Replacing the clearErrorMessage function
 function clearErrorMessage() {
-    // If there's no UI element to clear, you may not need this function.
-    // However, if you had UI elements to clear errors, you'd do it here.
-    console.log('Error message cleared');
+    errorDisplayed = false;
 }
 
 
