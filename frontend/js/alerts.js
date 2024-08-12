@@ -3,6 +3,8 @@ import {
     audio, 
     audioReady,
     emailSent,
+    lastAlertTimestamp,
+    userInteracted
     
 } from './config.js';;
 
@@ -49,7 +51,7 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
                 console.log("Date:", formattedDate);
 
                 sendAlertEmail(latestRow, latestDate);
-                emailSent = true; // Set the flag to indicate email has been sent
+                state.emailSent = true; // Set the flag to indicate email has been sent
             }
 
             Swal.fire({

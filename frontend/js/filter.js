@@ -1,11 +1,8 @@
 import {
     state
   } from "./config.js";
-import {
- 
- lastValidEndDate,
- lastValidStartDate
-} from "./config.js";
+
+import { fetchDataAndDisplay } from "./fetch-data.js";
 
 
 function filterDataByDateRange(data, startDate, endDate) {
@@ -31,11 +28,11 @@ function resetToDefaultDateRange() {
     document.getElementById('date-range-display').innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
 
     // Update the global last valid date range variables
-    lastValidStartDate = defaultDateRange.startDate;
-    lastValidEndDate = defaultDateRange.endDate;
+    state.lastValidStartDate = defaultDateRange.startDate;
+    state.lastValidEndDate = defaultDateRange.endDate;
 
     // Fetch and display the data for the default date range
-    fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
+    fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
 }
 
 function getDefaultDateRange() {

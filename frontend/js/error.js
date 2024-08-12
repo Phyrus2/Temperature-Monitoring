@@ -1,24 +1,24 @@
 
 import { 
-    errorDisplayed
+    state
     
 } from './config.js';
 
 
 function displayErrorMessage(title, message, callback) {
-    if (!errorDisplayed) { 
+    if (!state.errorDisplayed) { 
         Swal.fire({
             title: title,
             text: message,
             icon: 'error',
             confirmButtonText: 'Ok'
         }).then(() => {
-            errorDisplayed = false; // Reset the flag when the alert is closed
+            state.errorDisplayed = false; // Reset the flag when the alert is closed
             if (callback) {
                 callback(); // Execute the callback function if provided
             }
         });
-        errorDisplayed = true; // Set the flag to prevent further alerts
+        state.errorDisplayed = true; // Set the flag to prevent further alerts
     }
 }
 

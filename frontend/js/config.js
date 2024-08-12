@@ -28,6 +28,7 @@ export const state = {
     lastTemperature: null,
     alertInterval: null,
     audioReady: false,
+    audio: document.getElementById('alert-sound'),
     lastAlertTimestamp: null,
 };
 

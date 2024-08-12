@@ -1,6 +1,7 @@
 import { getDefaultDateRange } from "./filter.js";
 import { fetchDataAndDisplay } from "./fetch-data.js";
 import { displayErrorMessage } from "./error.js";
+import { resetToDefaultDateRange } from "./filter.js";
 import {
     state
   } from "./config.js";
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     setInterval(() => {
         // Use the last valid date range for interval fetching
         fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
-    }, 5000);
+    }, 10000);
 });
 
 document.getElementById("filter-button").addEventListener("click", function () {
@@ -95,14 +96,14 @@ audio.load();
 document.addEventListener(
   "click",
   () => {
-    userInteracted = true;
+    state.userInteracted = true;
     if (!audioReady) {
       audio
         .play()
         .then(() => {
           audio.pause();
           audio.currentTime = 0;
-          audioReady = true;
+          state.audioReady = true;
         })
         .catch((error) => {
           console.error("Audio play failed:", error);
