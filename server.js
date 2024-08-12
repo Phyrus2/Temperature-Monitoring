@@ -947,20 +947,57 @@ async function sendEmailForPreviousMonth(testMonth = null, testYear = null) {
         );
 
         let mailOptions = {
-          from: "madeyudaadiwinata@gmail.com",
+          from: '"PEPITO THCheck" <alerts@yourdomain.com>',
           to: "yudamulehensem@gmail.com",
           subject: `Monthly Temperature and Humidity Report for ${getMonthName(
             previousMonth
           )} ${year}`,
-          html: `<p>Please find the attached charts and table for the monthly temperature and humidity data.</p>`,
+          html: `
+            <html>
+              <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                  
+                  <header style="text-align: center; margin-bottom: 20px;">
+                    <h1>Monthly Temperature and Humidity Report</h1>
+                    <h2 style="color: #555;">${getMonthName(previousMonth)} ${year}</h2>
+                  </header>
+        
+                  <main>
+                    <p style="font-size: 16px; margin-bottom: 20px;">
+                      Dear Administrator,
+                    </p>
+                    <p style="font-size: 16px; margin-bottom: 20px;">
+                      Please find the attached charts and table for the monthly temperature and humidity data. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
+                    </p>
+                    <p style="font-size: 16px; margin-bottom: 20px;">
+                      We encourage you to review the data to ensure optimal conditions are maintained.
+                    </p>
+                    <p style="font-size: 16px; font-weight: bold;">
+                      Attachment: Report for ${getMonthName(previousMonth)} ${year}
+                    </p>
+                  </main>
+        
+                  <footer style="margin-top: 30px; text-align: center; color: #888;">
+                    <p style="font-size: 14px;">PEPITO THCheck</p>
+                    <p style="font-size: 14px;">Monitoring & Alerts Team</p>
+                    <p style="font-size: 14px;">
+                      <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
+                    </p>
+                  </footer>
+        
+                </div>
+              </body>
+            </html>
+          `,
           attachments: [
             {
-              filename: "report.pdf",
+              filename: `${getMonthName(previousMonth)} Report.pdf`, 
               content: pdfBuffer,
               contentType: "application/pdf",
             },
           ],
         };
+        
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
@@ -1176,12 +1213,36 @@ app.get("/data-by-date", (req, res) => {
 app.post("/send-alert-email", (req, res) => {
   const { temperature, date } = req.body;
 
+  const formattedDate = new Date(date).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  }).replace(/:\d{2}\s/, ' '); // Removes the minutes part.
+
   const mailOptions = {
-    from: "Temperature Monitoring",
+    from: '"PEPITO THCheck" <alerts@yourdomain.com>',
     to: "yudamulehensem@gmail.com",
-    subject: "Temperature Alert",
-    text: `Alert! The latest temperature is ${temperature}°C recorded at ${date}.`,
+    subject: "⚠️ Urgent Temperature Alert!",
+    html: `
+      <html>
+        <body style="font-family: Arial, sans-serif; color: #333;">
+          <div style="border: 2px solid #ff0000; padding: 20px; border-radius: 5px; background-color: #fdd; max-width: 600px; margin: auto;">
+            <h2 style="color: #ff0000;">⚠️ Temperature Exceeds Threshold!</h2>
+            <p><strong>Current Temperature:</strong> ${temperature}°C</p>
+            <p><strong>Recorded At:</strong> ${formattedDate}</p>
+            <p style="font-weight: bold; color: #ff0000;">Immediate action is required to address the high temperature!</p>
+            <p>For further assistance, please contact the Temperature Monitoring team.</p>
+          </div>
+        </body>
+      </html>
+    `,
   };
+  
+  
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
