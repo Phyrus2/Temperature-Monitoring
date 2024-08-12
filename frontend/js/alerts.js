@@ -1,15 +1,14 @@
 
 import { 
-    audio, 
+    
     audioReady,
     emailSent,
-    lastAlertTimestamp,
-    userInteracted
+   
     
 } from './config.js';;
 
 import { state } from './config.js';
-
+const audio = document.getElementById('alert-sound');
 audio.loop = true;
 audio.load();
 
@@ -17,11 +16,11 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
     const thirtyMinutes = 30 * 60 * 1000; // 30 minutes
 
     if (isActive) {
-        if (lastAlertTimestamp && (new Date() - lastAlertTimestamp) < thirtyMinutes) {
+        if (state.lastAlertTimestamp && (new Date() - state.lastAlertTimestamp) < thirtyMinutes) {
             return; // Don't show alert if it was shown within the last 30 minutes
         }
 
-        if (userInteracted && audioReady && audio.paused) {
+        if (state.userInteracted && audioReady && audio.paused) {
             audio.play();
         }
 
@@ -77,13 +76,13 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
                 // This will be executed when the alert is closed
                 audio.pause();
                 audio.currentTime = 0;
-                lastAlertTimestamp = new Date(); // Update the last alert timestamp
-                emailSent = false; // Reset the email sent flag when alert is closed
+                state.lastAlertTimestamp = new Date(); // Update the last alert timestamp
+                state.emailSent = false; // Reset the email sent flag when alert is closed
             });
         }
     } else {
-        audio.pause();
-        audio.currentTime = 0;
+        state.audio.pause();
+        state.audio.currentTime = 0;
         if (Swal.isVisible()) {
             Swal.close();
         }

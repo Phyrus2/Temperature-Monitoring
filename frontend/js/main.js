@@ -7,9 +7,9 @@ import {
   } from "./config.js";
 import {
  
-  audio,
+ 
   audioReady,
-  userInteracted,
+ 
 } from "./config.js";
 
 // Fetch data and display on initial load
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
 });
-
+const audio = document.getElementById('alert-sound');
 audio.loop = true;
 audio.load();
 

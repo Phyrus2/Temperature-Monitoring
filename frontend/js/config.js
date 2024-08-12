@@ -12,7 +12,7 @@ export let userInteracted = false;
 export let lastTemperature = null;
 export let alertInterval = null;
 export let audioReady = false;
-export const audio = document.getElementById('alert-sound');
+
 export let lastAlertTimestamp = null;
 
 export const state = {
@@ -32,6 +32,3 @@ export const state = {
     lastAlertTimestamp: null,
 };
 
-// Preload the audio and set it to loop
-audio.loop = true;
-audio.load();
