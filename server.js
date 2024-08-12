@@ -660,7 +660,7 @@ async function generatePdf(
     
     await page.evaluate(
       (humidityData, temperatureData, labels) => {
-        const createChart = (selector, seriesName, data, color, annotationText) => {
+        const createChart = (selector, seriesName, data, color, annotationText, gradient) => {
           const options = {
             series: [
               {
@@ -711,7 +711,7 @@ async function generatePdf(
                 left: 0,
                 blur: 50,
                 opacity: 1,
-                color: color,
+                color: gradient,
               },
             },
             fill: {
@@ -720,7 +720,7 @@ async function generatePdf(
                 shade: "light",
                 type: "vertical",
                 shadeIntensity: 0.2,
-                gradientToColors: [color],
+                gradientToColors: [gradient],
                 inverseColors: false,
                 opacityFrom: 0.4,
                 opacityTo: 0.2,
@@ -810,14 +810,16 @@ async function generatePdf(
           "Humidity",
           humidityData,
           "rgba(0, 128, 0, 0.5)",
-          "Humidity"
+          "Humidity",
+          "#008000"
         );
         createChart(
           "#temperatureChart",
           "Temperature",
           temperatureData,
           "rgba(255, 0, 0, 0.5)",
-          "Temperature"
+          "Temperature",
+          "#FF0000"
         );
       },
       floatHumidityData,
