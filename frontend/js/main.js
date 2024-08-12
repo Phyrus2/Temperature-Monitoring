@@ -5,12 +5,7 @@ import { resetToDefaultDateRange } from "./filter.js";
 import {
     state
   } from "./config.js";
-import {
- 
- 
-  audioReady,
- 
-} from "./config.js";
+
 
 // Fetch data and display on initial load
 const defaultDateRange = getDefaultDateRange();
@@ -88,31 +83,4 @@ document.addEventListener("DOMContentLoaded", function () {
     { year: "numeric", month: "long", day: "numeric" }
   );
   dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
-});
-const audio = document.getElementById('alert-sound');
-audio.loop = true;
-audio.load();
-
-document.addEventListener(
-  "click",
-  () => {
-    state.userInteracted = true;
-    if (!audioReady) {
-      audio
-        .play()
-        .then(() => {
-          audio.pause();
-          audio.currentTime = 0;
-          state.audioReady = true;
-        })
-        .catch((error) => {
-          console.error("Audio play failed:", error);
-        });
-    }
-  },
-  { once: true }
-); // Listen only once
-
-audio.addEventListener("canplaythrough", () => {
-  state.audioReady = true;
 });

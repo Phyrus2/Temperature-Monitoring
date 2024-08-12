@@ -1,7 +1,6 @@
 
 import { 
     
-    audioReady,
     emailSent,
    
     
@@ -9,8 +8,35 @@ import {
 
 import { state } from './config.js';
 const audio = document.getElementById('alert-sound');
+let audioReady = false;
+
 audio.loop = true;
 audio.load();
+
+document.addEventListener(
+  "click",
+  () => {
+    state.userInteracted = true;
+    if (!audioReady) {
+      audio
+        .play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          state.audioReady = true;
+        })
+        .catch((error) => {
+          console.error("Audio play failed:", error);
+        });
+    }
+  },
+  { once: true }
+); // Listen only once
+
+audio.addEventListener("canplaythrough", () => {
+  state.audioReady = true;
+});
+
 
 function handleTemperatureAlert(isActive, latestRow, latestDate) {
     const thirtyMinutes = 30 * 60 * 1000; // 30 minutes
@@ -81,8 +107,8 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
             });
         }
     } else {
-        state.audio.pause();
-        state.audio.currentTime = 0;
+        audio.pause();
+        audio.currentTime = 0;
         if (Swal.isVisible()) {
             Swal.close();
         }
