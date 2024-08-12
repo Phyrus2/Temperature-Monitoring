@@ -1,195 +1,393 @@
 let chart;
+let errorDisplayed = false; // Flag to track if an error has been displayed
+let lastValidStartDate, lastValidEndDate; // Variables to store the last valid date range
+let hasError = false;
+
 document.addEventListener('DOMContentLoaded', (event) => {
     const defaultDateRange = getDefaultDateRange();
-    fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
+    lastValidStartDate = defaultDateRange.startDate;
+    lastValidEndDate = defaultDateRange.endDate;
+    fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
+
     setInterval(() => {
-        const startDate = document.getElementById('start-date').value || defaultDateRange.startDate;
-        const endDate = document.getElementById('end-date').value || defaultDateRange.endDate;
-        fetchDataAndDisplay(startDate, endDate);
+        // Use the last valid date range for interval fetching
+        fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
     }, 5000);
 });
 
 document.getElementById('filter-button').addEventListener('click', function() {
-    const startDate = document.getElementById('start-date').value;
-    const endDate = document.getElementById('end-date').value;
-    if (startDate && endDate) {
-        if (new Date(startDate) > new Date(endDate)) {
-            displayErrorMessage("End date cannot be earlier than start date.");
-        } else {
-            fetchDataAndDisplay(startDate, endDate);
-        }
-    } else {
-        displayErrorMessage("Please select both start and end dates.");
+    let startDate = document.getElementById('start-date').value;
+    let endDate = document.getElementById('end-date').value;
+    const dateRangeDisplay = document.getElementById('date-range-display');
+
+    if (!startDate || !endDate) {
+        displayErrorMessage('Invalid Date Range', 'Please select both start and end dates.');
+        return;
     }
-});
 
-document.getElementById('chart-select').addEventListener('change', function() {
-    const startDate = document.getElementById('start-date').value || getDefaultDateRange().startDate;
-    const endDate = document.getElementById('end-date').value || getDefaultDateRange().endDate;
+    if (new Date(startDate) > new Date(endDate)) {
+        displayErrorMessage('Invalid Date Range', 'The end date cannot be earlier than the start date.', resetToDefaultDateRange);
+        return;
+    }
+
+    const formattedStartDate = new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedEndDate = new Date(endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
+
+    // Store the valid date range in the variables
+    lastValidStartDate = startDate;
+    lastValidEndDate = endDate;
+
+    // Fetch and display the filtered data based on user input
     fetchDataAndDisplay(startDate, endDate);
 });
 
-document.getElementById('display-select').addEventListener('change', function() {
-    const startDate = document.getElementById('start-date').value || getDefaultDateRange().startDate;
-    const endDate = document.getElementById('end-date').value || getDefaultDateRange().endDate;
-    fetchDataAndDisplay(startDate, endDate);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultDates = getDefaultDateRange();
+    document.getElementById('start-date').value = defaultDates.startDate;
+    document.getElementById('end-date').value = defaultDates.endDate;
+
+    const dateRangeDisplay = document.getElementById('date-range-display');
+    const formattedStartDate = new Date(defaultDates.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedEndDate = new Date(defaultDates.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
 });
+
+
+let temperatureChart, humidityChart;
 
 function fetchDataAndDisplay(startDate, endDate) {
-    const selectedChart = document.getElementById('chart-select').value;
-    const displayType = document.getElementById('display-select').value;
-    fetchData(startDate, endDate, true, selectedChart, displayType);
+    fetchData(startDate, endDate, true, 'chart');
 }
 
-function drawTemperatureChart(data) {
-    const ctx = document.getElementById('myChart').getContext('2d');
+const drawTemperatureChart = (data, isSingleDay) => {
     const temperatures = data.map(row => parseFloat(row.temperature || row.avg_temperature));
-    const labels = data.map(row => row.time_stamp ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
+    const labels = data.map(row => isSingleDay ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
 
-    if (chart) {
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: temperatures,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            }]
-        },
-        options: {
-            plugins: {
-                legend: {
-                    display: false
-                }
+    const temperatureChartOptions = {
+        series: [{
+            name: "Temperature",
+            data: temperatures,
+        }],
+        colors: ["rgba(255, 0, 0, 0.5)"],
+        chart: {
+            fontFamily: "Satoshi, sans-serif",
+            height: 335,
+            type: "area", // change to area to ensure the fill shows properly
+            toolbar: {
+                show: false,
             },
-            scales: {
-                x: {
-                    display: true
-                },
-                y: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Temperature (°C)',
-                    },
-                    ticks: {
-                        stepSize: 1, // Set step size to 1
-                        callback: function(value) {
-                            return value.toFixed(0); // Menghapus desimal
-                        }
-                    },
-                    min: Math.floor(Math.min(...temperatures) - 1), // Adjust min value
-                    max: Math.ceil(Math.max(...temperatures) + 1)   // Adjust max value
-                }
-            }
-        }
-    });
-}
-
-
-
-function drawHumidityChart(data) {
-    const ctx = document.getElementById('myChart').getContext('2d');
-    const humidity = data.map(row => parseFloat(row.humidity || row.avg_humidity));
-    const labels = data.map(row => row.time_stamp ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
-
-    if (chart) {
-        chart.destroy();
-    }
-
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: humidity,
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            }]
+            width: "100%",
         },
-        options: {
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                x: {
-                    display: true
-                },
-                y: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Humidity (%)',
-                    },
-                    ticks: {
-                        stepSize: 1, // Set step size to 1
-                        callback: function(value) {
-                            return value.toFixed(0); // Menghapus desimal
-                        }
-                    },
-                    suggestedMin: Math.min(...humidity) - 1, // Mengurangi sedikit nilai minimum
-                    suggestedMax: Math.max(...humidity) + 1  // Menambah sedikit nilai maksimum
-                }
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'light',
+                type: "vertical",
+                shadeIntensity: 0.2,
+                gradientToColors: ["#FF0000"], // end color of the gradient to red
+                inverseColors: false,
+                opacityFrom: 0.4, // starting opacity of the fill
+                opacityTo: 0.2,    // ending opacity of the fill
+                stops: [0, 90, 100]
             }
-        }
-    });
-}
+        },
+        responsive: [
+            {
+                breakpoint: 1024,
+                options: {
+                    chart: {
+                        height: 300,
+                    },
+                },
+            },
+            {
+                breakpoint: 1366,
+                options: {
+                    chart: {
+                        height: 350,
+                    },
+                },
+            },
+        ],
+        stroke: {
+            width: 2,
+            curve: "smooth",
+            colors: ["rgba(255, 0, 0, 0.6)"], // Ensure the stroke color matches the series color
+            dropShadow: {
+                enabled: true,
+                top: 0,
+                left: 0,
+                blur: 50, // increased blur for more prominent shadow
+                opacity: 1, // increased opacity for darker shadow
+                color: '#FF0000' // Change shadow color to red
+            }
+        },
+        markers: {
+            size: 4,
+            colors: "#fff",
+            
+            strokeColors: ["rgba(255, 0, 0, 0.6)"], // Change marker stroke color to red
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+                size: undefined,
+                sizeOffset: 5,
+            },
+        },
+        xaxis: {
+            type: "category",
+            categories: labels,
+            axisBorder: {
+                show: false,
+            },
+            axisTicks: {
+                show: false,
+            },
+        },
+        yaxis: {
+            title: {
+                style: {
+                    fontSize: "0px",
+                },
+            },
+            
+        },
+        dataLabels: {
+            enabled: false,
+        },
+        grid: {
+            xaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+            yaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+        },
+    };
 
-
-
-
-function renderTable(data) {
-    const tableBody = document.getElementById('data-table-body');
-    tableBody.innerHTML = ''; // Clear existing table data
-
-    data.forEach(row => {
-        const tr = document.createElement('tr');
-        const dateOrTimeTd = document.createElement('td');
-        const tempTd = document.createElement('td');
-        const humidityTd = document.createElement('td');
-
-        // Check if row contains time_stamp or date to differentiate between single day and range
-        if (row.time_stamp) {
-            // If time_stamp exists, it's a single day data
-            dateOrTimeTd.textContent = row.time_stamp;
-        } else {
-            // Otherwise, it's a date range data
-            dateOrTimeTd.textContent = new Date(row.date).toLocaleDateString();
-        }
-
-        // Handle single day and date range temperature and humidity
-        const temperature = row.temperature || row.avg_temperature;
-        const humidity = row.humidity || row.avg_humidity;
-
-        tempTd.textContent = temperature + "°C";
-        humidityTd.textContent = humidity + "%";
-
-        tr.appendChild(dateOrTimeTd);
-        tr.appendChild(tempTd);
-        tr.appendChild(humidityTd);
-
-        tableBody.appendChild(tr);
-    });
-
-    const tableWrapper = document.querySelector('.table-wrapper');
-    if (data.length > 20) {
-        tableWrapper.style.overflowY = 'auto';
+    if (temperatureChart) {
+        temperatureChart.updateOptions(temperatureChartOptions);
     } else {
-        tableWrapper.style.overflowY = 'hidden';
+        const temperatureChartSelector = document.querySelector("#chartTemperature");
+        if (temperatureChartSelector) {
+            temperatureChart = new ApexCharts(temperatureChartSelector, temperatureChartOptions);
+            temperatureChart.render();
+        }
     }
+};
+
+
+
+const drawHumidityChart = (data, isSingleDay) => {
+    const humidity = data.map(row => parseFloat(row.humidity || row.avg_humidity));
+    const labels = data.map(row => isSingleDay ? row.time_stamp.slice(0, 5) : new Date(row.date).toLocaleDateString());
+
+    const humidityChartOptions = {
+        series: [{
+            name: "Humidity",
+            data: humidity,
+        }],
+        colors: ["rgba(0, 128, 0, 0.5)"], // Warna garis hijau dengan opacity 50%
+        chart: {
+            fontFamily: "Satoshi, sans-serif",
+            height: 335,
+            type: "area", // Mengubah tipe grafik menjadi area
+            toolbar: {
+                show: false,
+            },
+            width: "100%",
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'light',
+                type: "vertical",
+                shadeIntensity: 0.2,
+                gradientToColors: ["#008000"], // Warna akhir gradasi hijau
+                inverseColors: false,
+                opacityFrom: 0.4, // Opasitas awal dari fill
+                opacityTo: 0.2,   // Opasitas akhir dari fill
+                stops: [0, 90, 100]
+            }
+        },
+        responsive: [
+            {
+                breakpoint: 1024,
+                options: {
+                    chart: {
+                        height: 300,
+                    },
+                },
+            },
+            {
+                breakpoint: 1366,
+                options: {
+                    chart: {
+                        height: 350,
+                    },
+                },
+            },
+        ],
+        stroke: {
+            width: 2,
+            curve: "smooth",
+            colors: ["rgba(0, 128, 0, 0.6)"], // Warna garis dengan opacity 60%
+            dropShadow: {
+                enabled: true,
+                top: 0,
+                left: 0,
+                blur: 50, // Blur yang lebih tinggi untuk shadow lebih menonjol
+                opacity: 1, // Opasitas yang lebih tinggi untuk shadow lebih gelap
+                color: '#008000' // Warna shadow hijau
+            }
+        },
+        markers: {
+            size: 4,
+            colors: "#fff",
+            strokeColors: ["rgba(0, 128, 0, 0.6)"], // Warna stroke marker hijau dengan opacity 60%
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+                size: undefined,
+                sizeOffset: 5,
+            },
+        },
+        xaxis: {
+            type: "category",
+            categories: labels,
+            axisBorder: {
+                show: false,
+            },
+            axisTicks: {
+                show: false,
+            },
+        },
+        yaxis: {
+            title: {
+                style: {
+                    fontSize: "0px",
+                },
+            },
+            
+        },
+        dataLabels: {
+            enabled: false,
+        },
+        grid: {
+            xaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+            yaxis: {
+                lines: {
+                    show: true,
+                },
+            },
+        },
+    };
+
+    if (humidityChart) {
+        humidityChart.updateOptions(humidityChartOptions);
+    } else {
+        const humidityChartSelector = document.querySelector("#chartHumidity");
+        if (humidityChartSelector) {
+            humidityChart = new ApexCharts(humidityChartSelector, humidityChartOptions);
+            humidityChart.render();
+        }
+    }
+};
+
+
+function renderDetailedTable(data) {
+    const tableBody = document.getElementById('data-table-body');
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    // Define the times that should appear in the table
+    const times = ['07:00:00', '10:00:00', '13:00:00', '16:00:00', '19:00:00', '22:00:00'];
+
+    // Helper function to get time in HH:00:00 format
+    const formatTime = (time) => time.split(':').slice(0, 2).join(':') + ':00';
+
+    // Group the data by date and time range
+    const groupedData = data.reduce((acc, curr) => {
+        const date = new Date(curr.date).toLocaleDateString();
+        const timeFormatted = formatTime(curr.time);
+        const hour = parseInt(curr.time.split(':')[0], 10);
+
+        // Initialize the data structure if it doesn't exist
+        if (!acc[date]) {
+            acc[date] = {
+                '07:00:00': { temperature: '-', humidity: '-' },
+                '10:00:00': { temperature: '-', humidity: '-' },
+                '13:00:00': { temperature: '-', humidity: '-' },
+                '16:00:00': { temperature: '-', humidity: '-' },
+                '19:00:00': { temperature: '-', humidity: '-' },
+                '22:00:00': { temperature: '-', humidity: '-' },
+            };
+        }
+
+        // Check if the time is within the range of the nearest hour slots
+        times.forEach(time => {
+            const timeHour = parseInt(time.split(':')[0], 10);
+            if (hour >= timeHour - 1 && hour <= timeHour + 1) {
+                acc[date][time] = {
+                    temperature: curr.temperature,
+                    humidity: curr.humidity
+                };
+            }
+        });
+
+        return acc;
+    }, {});
+
+    // Create a row for each date
+    Object.keys(groupedData).forEach(date => {
+        const divRow = document.createElement('div');
+        divRow.className = "grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5";
+
+        // Create and append the date column with right border
+        const dateDiv = document.createElement('div');
+        dateDiv.className = "col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark";
+        dateDiv.textContent = date;
+        divRow.appendChild(dateDiv);
+
+        // Create and append the time slots with right border, except the last one
+        times.forEach((time, index) => {
+            const timeDiv = document.createElement('div');
+            // Add a right border to all columns except the last one
+            timeDiv.className = `col-span-1 flex items-center justify-center ${index !== times.length - 1 ? 'border-r' : ''} border-stroke dark:border-strokedark`;
+            const dataEntry = groupedData[date][time];
+            timeDiv.textContent = `${dataEntry.temperature}/${dataEntry.humidity}`;
+            divRow.appendChild(timeDiv);
+        });
+
+        tableBody.appendChild(divRow);
+    });
 }
 
 
 
 
 
-function fetchData(startDate, endDate, isFiltered = false, selectedChart, displayType) {
+
+
+
+
+
+
+function fetchData(startDate, endDate, isFiltered = false, displayType) {
+    // Existing XMLHttpRequest for other endpoint
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (this.readyState == 4) {
@@ -198,10 +396,10 @@ function fetchData(startDate, endDate, isFiltered = false, selectedChart, displa
                     var responseText = this.responseText;
                     console.log("Raw response text:", responseText);
                     var data = JSON.parse(responseText);
-                    console.log("Parsed data:", data); // Log data yang diterima
+                    console.log("Parsed data:", data); // Log the received data
                     if (isFiltered) {
                         if (data.length === 0) {
-                            displayErrorMessage("No data available for the selected date range.");
+                            displayErrorMessage("Data Not Found","No data available for the selected date range.");
                             var defaultDateRange = getDefaultDateRange();
                             fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
                             return;
@@ -211,36 +409,82 @@ function fetchData(startDate, endDate, isFiltered = false, selectedChart, displa
                     }
                     const isSingleDay = startDate === endDate;
                     updateStats(data, isSingleDay);
-                    if (displayType === 'chart') {
-                        document.getElementById('myChart').style.display = 'block';
-                        document.getElementById('data-table').style.display = 'none';
-                        if (selectedChart === 'temperature') {
-                            drawTemperatureChart(data);
-                        } else if (selectedChart === 'humidity') {
-                            drawHumidityChart(data);
-                        }
-                    } else if (displayType === 'table') {
-                        document.getElementById('myChart').style.display = 'none';
-                        document.getElementById('data-table').style.display = 'block';
-                        renderTable(data);
+                    
+                    // Always display charts
+                    document.getElementById('chartTemperature').style.display = 'block';
+                    document.getElementById('chartHumidity').style.display = 'block';
+                    
+                    drawTemperatureChart(data, isSingleDay);
+                    drawHumidityChart(data, isSingleDay);
+                    
+                    // Display table if needed
+                    if (displayType === 'table') {
+                        renderDetailedTable(data);
                     }
+                    
                 } catch (e) {
                     console.error("Error parsing JSON: ", e);
-                    displayErrorMessage("Error parsing JSON data.");
+                    displayErrorMessage("Parsing Error","Error parsing JSON data.");
                 }
             } else {
-                console.error("XHR request failed with status: ", this.status);
-                displayErrorMessage("Failed to fetch data. Status: " + this.status);
+                console.error("XHR request failed with status: ");
+                displayErrorMessage("Data Not Found","Failed to fetch data.", resetToDefaultDateRange);
+                
+                
             }
         }
     };
 
+    // Existing URL for the other endpoint
     const url = startDate === endDate ? 
         `http://localhost:3000/data-by-date?date=${startDate}` :
         `http://localhost:3000/average-data?startDate=${startDate}&endDate=${endDate}`;
 
     xhr.open("GET", url, true);
     xhr.send();
+
+    // New XMLHttpRequest to call the /detailed-data endpoint
+    var xhrDetailed = new XMLHttpRequest();
+    xhrDetailed.onreadystatechange = function() {
+        if (this.readyState == 4) {
+            if (this.status == 200) {
+                try {
+                    var responseTextDetailed = this.responseText;
+                    console.log("Raw response text (detailed):", responseTextDetailed);
+                    var dataDetailed = JSON.parse(responseTextDetailed);
+                    console.log("Parsed data (detailed):", dataDetailed); // Log the received data
+                    if (isFiltered) {
+                        if (dataDetailed.length === 0) {
+                            displayErrorMessage("Data Not Found","No detailed data available for the selected date range.");
+                            var defaultDateRange = getDefaultDateRange();
+                            fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
+                            return;
+                        } else {
+                            clearErrorMessage();
+                        }
+                    }
+                    // Display table if needed
+                   
+                        renderDetailedTable(dataDetailed);
+                        console.log("Detailed data")
+                    
+                    
+                } catch (e) {
+                    console.error("Error parsing JSON (detailed): ", e);
+                    displayErrorMessage("Parsing Error","Error parsing JSON data (detailed).");
+                }
+            } else {
+                console.error("XHR request for detailed data failed with status: ", this.status);
+                displayErrorMessage("Data Not Found","Failed to fetch detailed data. Status: " + this.status);
+            }
+        }
+    };
+
+    // New URL for the /detailed-data endpoint
+    const urlDetailed = `http://localhost:3000/detailed-data?startDate=${startDate}&endDate=${endDate}`;
+    
+    xhrDetailed.open("GET", urlDetailed, true);
+    xhrDetailed.send();
 }
 
 
@@ -269,6 +513,23 @@ function clearErrorMessage() {
     }
 }
 
+function resetToDefaultDateRange() {
+    const defaultDateRange = getDefaultDateRange();
+    document.getElementById('start-date').value = defaultDateRange.startDate;
+    document.getElementById('end-date').value = defaultDateRange.endDate;
+
+    // Update the date range display with the default dates
+    const formattedStartDate = new Date(defaultDateRange.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const formattedEndDate = new Date(defaultDateRange.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('date-range-display').innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
+
+    // Update the global last valid date range variables
+    lastValidStartDate = defaultDateRange.startDate;
+    lastValidEndDate = defaultDateRange.endDate;
+
+    // Fetch and display the data for the default date range
+    fetchDataAndDisplay(lastValidStartDate, lastValidEndDate);
+}
 
 
 function getDefaultDateRange() {
@@ -310,6 +571,10 @@ audio.addEventListener('canplaythrough', () => {
     audioReady = true;
 });
 
+
+
+let lastTemperature = null;
+let alertInterval = null;
 function updateStats(data, isSingleDay) {
     if (data.length === 0) return;
 
@@ -321,7 +586,7 @@ function updateStats(data, isSingleDay) {
 
     let temperatureAlertActive = false; // Flag to track if alert is active
 
-    // Cari data dengan timestamp paling baru
+    // Find the latest data row
     let latestRow = null;
     let latestDate = -Infinity;
 
@@ -331,7 +596,6 @@ function updateStats(data, isSingleDay) {
         let date;
 
         if (isSingleDay) {
-            // Assuming row.time_stamp is in HH:MM:SS format and baseDate is YYYY-MM-DD
             const baseDate = new Date().toISOString().split('T')[0];
             date = `${baseDate}T${row.time_stamp}`;
         } else {
@@ -383,18 +647,24 @@ function updateStats(data, isSingleDay) {
     document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
     document.getElementById("lowest-humidity-date").textContent = formatDate(lowestHumidityDate);
 
-    // Periksa suhu terbaru untuk mengaktifkan alert
+    // Check if the latest temperature exceeds the threshold
     if (latestRow) {
         const latestTemperature = parseFloat(latestRow.temperature || latestRow.avg_temperature);
         temperatureAlertActive = latestTemperature > 30;
     }
 
+    
+
     // Handle temperature alert
-    handleTemperatureAlert(temperatureAlertActive, latestDate);
+    handleTemperatureAlert(temperatureAlertActive, latestRow, latestDate);
 }
 
-function handleTemperatureAlert(isActive, latestDate) {
-    const thirtyMinutes = 30 * 60 * 1000;
+
+
+let emailSent = false; // Flag to ensure the email is only sent once
+
+function handleTemperatureAlert(isActive, latestRow, latestDate) {
+    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes
 
     if (isActive) {
         if (lastAlertTimestamp && (new Date() - lastAlertTimestamp) < thirtyMinutes) {
@@ -406,9 +676,43 @@ function handleTemperatureAlert(isActive, latestDate) {
         }
 
         if (!Swal.isVisible()) {
+            // Extract temperature and date, handling undefined values
+            const temperature = latestRow ? latestRow.temperature || latestRow.avg_temperature : null;
+            const date = latestDate || new Date();
+
+            console.log("Temperature:", temperature);
+            console.log("Date:", date);
+
+            // Format the date as per the new requirements
+            const formattedDate = new Date(date).toLocaleString('en-US', {
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            }).replace(/:\d{2}\s/, ' '); // Removes the minutes part.
+
+            if (!emailSent) {
+                // Send email alert once when the alert is displayed
+                console.log("Sending alert email with the following data:");
+                console.log("Temperature:", temperature);
+                console.log("Date:", formattedDate);
+
+                sendAlertEmail(latestRow, latestDate);
+                emailSent = true; // Set the flag to indicate email has been sent
+            }
+
             Swal.fire({
                 title: "Warning!",
-                text: "Temperature exceeds 30 degrees.",
+                html: `
+                    <div style="text-align: center;">
+                        <p>Temperature exceeds 30 degrees</p>
+                        <p>Current temperature: ${temperature}°C</p>
+                        <p>Recorded at ${formattedDate}</p>
+                    </div>
+                `,
                 icon: "warning",
                 backdrop: `
                     rgba(255,0,0,0.4)
@@ -424,6 +728,7 @@ function handleTemperatureAlert(isActive, latestDate) {
                 audio.pause();
                 audio.currentTime = 0;
                 lastAlertTimestamp = new Date(); // Update the last alert timestamp
+                emailSent = false; // Reset the email sent flag when alert is closed
             });
         }
     } else {
@@ -432,39 +737,60 @@ function handleTemperatureAlert(isActive, latestDate) {
         if (Swal.isVisible()) {
             Swal.close();
         }
+        emailSent = false; // Reset the flag when the alert is not active
     }
+}
+
+
+function sendAlertEmail(latestRow, latestDate) {
+    fetch('http://localhost:3000/send-alert-email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            temperature: latestRow.temperature || latestRow.avg_temperature,
+            date: latestDate,
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to send alert email');
+        }
+        console.log('Alert email sent successfully');
+    })
+    .catch(error => {
+        console.error('Error sending alert email:', error);
+    });
+}
+
+
+function displayErrorMessage(title, message, callback) {
+    if (!errorDisplayed) { 
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: 'error',
+            confirmButtonText: 'Ok'
+        }).then(() => {
+            errorDisplayed = false; // Reset the flag when the alert is closed
+            if (callback) {
+                callback(); // Execute the callback function if provided
+            }
+        });
+        errorDisplayed = true; // Set the flag to prevent further alerts
+    }
+}
+
+// Replacing the clearErrorMessage function
+function clearErrorMessage() {
+    errorDisplayed = false;
 }
 
 
 
 
 
-
-
-
-
-
- // Display error message in modal
- function displayErrorMessage(message) {
-    const modal = document.getElementById('errorModal');
-    const modalMessage = document.getElementById('modal-message');
-    modalMessage.textContent = message;
-    modal.style.display = 'block';
-}
-
-// Close the modal when the close button is clicked
-document.querySelector('.close').addEventListener('click', function() {
-    const modal = document.getElementById('errorModal');
-    modal.style.display = 'none';
-});
-
-// Close the modal when the user clicks outside of it
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('errorModal');
-    if (event.target == modal) {
-        modal.style.display = 'none';
-    }
-});
 
 
 // Fetch data and display on initial load
