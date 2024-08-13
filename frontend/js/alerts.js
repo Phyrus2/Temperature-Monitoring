@@ -1,43 +1,90 @@
-
-import { 
-    
-    emailSent,
-   
-    
-} from './config.js';;
-
 import { state } from './config.js';
+
 const audio = document.getElementById('alert-sound');
-let audioReady = false;
 
-audio.loop = true;
-audio.load();
+// Function to show the permission request modal
+function showAudioPermissionModal() {
+    const modal = document.getElementById('audioPermissionModal');
+    modal.classList.remove('hidden');
+}
 
-document.addEventListener(
-  "click",
-  () => {
-    state.userInteracted = true;
-    if (!audioReady) {
-      audio
-        .play()
-        .then(() => {
-          audio.pause();
-          audio.currentTime = 0;
-          state.audioReady = true;
-        })
-        .catch((error) => {
-          console.error("Audio play failed:", error);
+// Function to hide the permission request modal
+function hideAudioPermissionModal() {
+    const modal = document.getElementById('audioPermissionModal');
+    modal.classList.add('hidden');
+}
+
+// Function to request autoplay permission and handle interaction
+function requestAutoplayPermission() {
+    showAudioPermissionModal();
+
+    document.getElementById('allowButton').addEventListener('click', () => {
+        hideAudioPermissionModal();
+
+        // Unlock audio playback
+        audio.loop = true;
+        audio.play().then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            state.audioReady = true; // Set a flag indicating that audio is ready to be played automatically
+            console.log("Audio alerts enabled.");
+
+            // Show success notification
+            showNotification("Permission Granted", "Audio alerts have been enabled.", "#34D399", "#34D399");
+        }).catch(error => {
+            console.error("Audio play failed:", error);
         });
-    }
-  },
-  { once: true }
-); // Listen only once
+    }, { once: true });
 
-audio.addEventListener("canplaythrough", () => {
-  state.audioReady = true;
-});
+    document.getElementById('denyButton').addEventListener('click', () => {
+        hideAudioPermissionModal();
+        
+
+        // Show error notification
+        showNotification("Permission Denied", "Audio alerts have been disabled.", "#F87171", "#F87171");
+    });
+}
 
 
+function showNotification(title, message, borderColor, bgColor) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-3 left-1/2 transform -translate-x-1/2  flex items-center border-l-6 px-7 py-2 shadow-md z-50`;
+
+    notification.style.height = '60px';
+    notification.style.width = '400px';
+    notification.style.borderColor = borderColor;
+    notification.style.backgroundColor = `${bgColor}33`; // Assuming `bgColor` is a light color
+    notification.style.color = `${bgColor}`; // Dark gray text color
+    notification.style.fontWeight = 'bold'; // Bold title text
+    notification.style.display = 'flex';
+    notification.style.alignItems = 'center';
+    notification.style.justifyContent = 'space-between';
+
+    notification.innerHTML = `
+        <div class="mr-3 flex items-center justify-center h-full" style="background-color: ${bgColor}; width: 36px; border-radius: 8px;">
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15.2984 0.826822L15.2868 0.811827L15.2741 0.797751C14.9173 0.401867 14.3238 0.400754 13.9657 0.794406L5.91888 9.45376L2.05667 5.2868C1.69856 4.89287 1.10487 4.89389 0.747996 5.28987C0.417335 5.65675 0.417335 6.22337 0.747996 6.59026L4.86742 11.0348C5.14445 11.3405 5.52858 11.5 5.89581 11.5C6.29242 11.5 6.65178 11.3355 6.92401 11.035L15.2162 2.11161C15.5833 1.74452 15.576 1.18615 15.2984 0.826822Z" fill="white" stroke="white"></path>
+            </svg>
+        </div>
+        <div class="flex-1">
+            <h5 class="text-lg font-bold">${title}</h5>
+            <p class="text-sm text-body">${message}</p>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Automatically remove the notification after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+
+
+
+
+// Function to handle temperature alerts
 function handleTemperatureAlert(isActive, latestRow, latestDate) {
     const thirtyMinutes = 30 * 60 * 1000; // 30 minutes
 
@@ -46,37 +93,27 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
             return; // Don't show alert if it was shown within the last 30 minutes
         }
 
-        if (state.userInteracted && audioReady && audio.paused) {
-            audio.play();
+        if (state.audioReady && audio.paused) {
+            audio.play().catch(error => console.error("Failed to play audio:", error));
         }
 
         if (!Swal.isVisible()) {
-            // Extract temperature and date, handling undefined values
             const temperature = latestRow ? latestRow.temperature || latestRow.avg_temperature : null;
             const date = latestDate || new Date();
 
-            console.log("Temperature:", temperature);
-            console.log("Date:", date);
-
-            // Format the date as per the new requirements
             const formattedDate = new Date(date).toLocaleString('en-US', {
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric', 
-                hour: 'numeric', 
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
                 minute: '2-digit',
-                hour12: true 
-            }).replace(/:\d{2}\s/, ' '); // Removes the minutes part.
+                hour12: true
+            }).replace(/:\d{2}\s/, ' '); 
 
-            if (!emailSent) {
-                // Send email alert once when the alert is displayed
-                console.log("Sending alert email with the following data:");
-                console.log("Temperature:", temperature);
-                console.log("Date:", formattedDate);
-
+            if (!state.emailSent) {
                 sendAlertEmail(latestRow, latestDate);
-                state.emailSent = true; // Set the flag to indicate email has been sent
+                state.emailSent = true; 
             }
 
             Swal.fire({
@@ -99,11 +136,10 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
                 allowEnterKey: false,
                 showConfirmButton: true
             }).then(() => {
-                // This will be executed when the alert is closed
                 audio.pause();
                 audio.currentTime = 0;
-                state.lastAlertTimestamp = new Date(); // Update the last alert timestamp
-                state.emailSent = false; // Reset the email sent flag when alert is closed
+                state.lastAlertTimestamp = new Date(); 
+                state.emailSent = false;
             });
         }
     } else {
@@ -112,11 +148,11 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
         if (Swal.isVisible()) {
             Swal.close();
         }
-        state.emailSent = false; // Reset the flag when the alert is not active
+        state.emailSent = false; 
     }
 }
 
-
+// Function to send alert email
 function sendAlertEmail(latestRow, latestDate) {
     fetch('http://localhost:3000/send-alert-email', {
         method: 'POST',
@@ -139,4 +175,7 @@ function sendAlertEmail(latestRow, latestDate) {
     });
 }
 
-export {handleTemperatureAlert, sendAlertEmail};
+// Call this function on page load to ask for autoplay permission
+requestAutoplayPermission();
+
+export { handleTemperatureAlert, sendAlertEmail };
