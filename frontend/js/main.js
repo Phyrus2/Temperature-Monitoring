@@ -2,25 +2,22 @@ import { getDefaultDateRange } from "./filter.js";
 import { fetchDataAndDisplay } from "./fetch-data.js";
 import { displayErrorMessage } from "./error.js";
 import { resetToDefaultDateRange } from "./filter.js";
-import {
-    state
-  } from "./config.js";
-
+import { state } from "./config.js";
 
 // Fetch data and display on initial load
 const defaultDateRange = getDefaultDateRange();
 fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
 
-document.addEventListener('DOMContentLoaded', (event) => {
-    const defaultDateRange = getDefaultDateRange();
-    state.lastValidStartDate = defaultDateRange.startDate;
-    state.lastValidEndDate = defaultDateRange.endDate;
-    fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
+document.addEventListener("DOMContentLoaded", (event) => {
+  const defaultDateRange = getDefaultDateRange();
+  state.lastValidStartDate = defaultDateRange.startDate;
+  state.lastValidEndDate = defaultDateRange.endDate;
+  fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
 
-    setInterval(() => {
-        // Use the last valid date range for interval fetching
-        fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
-    }, 5000);
+  setInterval(() => {
+    // Use the last valid date range for interval fetching
+    fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
+  }, 5000);
 });
 
 document.getElementById("filter-button").addEventListener("click", function () {

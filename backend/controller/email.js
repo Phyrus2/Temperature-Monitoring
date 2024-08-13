@@ -377,7 +377,7 @@ async function generatePdf(
   );
 
   await page.pdf({
-    path: "./combined_chart_table.pdf",
+    path: "../assets/Montly Report.pdf",
     format: "A4",
     landscape: true,
     printBackground: true,
