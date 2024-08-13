@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     setInterval(() => {
         // Use the last valid date range for interval fetching
         fetchDataAndDisplay(state.lastValidStartDate, state.lastValidEndDate);
-    }, 10000);
+    }, 5000);
 });
 
 document.getElementById("filter-button").addEventListener("click", function () {

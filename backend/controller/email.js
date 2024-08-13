@@ -1,0 +1,624 @@
+const nodemailer = require("nodemailer");
+const puppeteer = require("puppeteer");
+const fs = require("fs"); // Import the fs module
+const db = require("../database/database")
+
+let transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "madeyudaadiwinata@gmail.com",
+      pass: "yakt dbuj midb bdle", // Replace with actual password
+    },
+    logger: true,
+    debug: true,
+  });
+
+async function generatePdf(
+  humidityData,
+  temperatureData,
+  labelsData,
+  tableData,
+  month,
+  year
+) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+
+  page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+
+  const floatHumidityData = humidityData.map((value) => parseFloat(value));
+  const floatTemperatureData = temperatureData.map((value) =>
+    parseFloat(value)
+  );
+  const stringLabels = labelsData.map((date) => new Date(date).toISOString());
+
+  const times = [
+    "07:00:00",
+    "10:00:00",
+    "13:00:00",
+    "16:00:00",
+    "19:00:00",
+    "22:00:00",
+  ];
+
+  const groupedData = tableData.reduce((acc, curr) => {
+    const date = new Date(curr.date).toLocaleDateString();
+    const time = curr.time;
+
+    if (!acc[date]) {
+      acc[date] = {};
+      times.forEach((timeSlot) => {
+        acc[date][timeSlot] = { temperature: "-", humidity: "-" };
+      });
+    }
+
+    let nearestTimeSlot = times.reduce((prev, currSlot) => {
+      const prevDiff = Math.abs(
+        new Date(`1970-01-01T${prev}Z`).getTime() -
+          new Date(`1970-01-01T${time}Z`).getTime()
+      );
+      const currDiff = Math.abs(
+        new Date(`1970-01-01T${currSlot}Z`).getTime() -
+          new Date(`1970-01-01T${time}Z`).getTime()
+      );
+      return currDiff < prevDiff ? currSlot : prev;
+    });
+
+    if (nearestTimeSlot) {
+      acc[date][nearestTimeSlot] = {
+        temperature: curr.temperature !== null ? curr.temperature : "-",
+        humidity: curr.humidity !== null ? curr.humidity : "-",
+      };
+    }
+
+    return acc;
+  }, {});
+
+  let tableHtml = `
+      <div class="table-container">
+        <div class="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark shadow-lg">
+          <div class="px-4 py-6 md:px-6 xl:px-7.5 bg-yellow-200">
+            <h4 class="text-xl font-bold text-black dark:text-white justify-center items-center flex">Data List</h4>
+          </div>
+  
+          <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5">
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark text-sm">
+              <p class="font-medium"></p>
+            </div>
+            <div class="col-span-6 flex items-center justify-center border-stroke dark:border-strokedark text-sm">
+              <p class="font-medium">Temperature/Humidity</p>
+            </div>
+          </div>
+  
+          <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5 text-sm">
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <p class="font-medium">Date</p>
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <p class="font-medium">07:00</p>
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <p class="font-medium">10:00</p>
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <p class="font-medium">13:00</p>
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <p class="font-medium">16:00</p>
+            </div>
+            <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+              <p class="font-medium">19:00</p>
+            </div>
+            <div class="col-span-1 flex items-center justify-center">
+              <p class="font-medium">22:00</p>
+            </div>
+          </div>
+  
+          <div id="data-table-body">`;
+
+  Object.keys(groupedData).forEach((date) => {
+    tableHtml += `
+        <div class="grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5 text-xs">
+          <div class="col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark">
+            ${date}
+          </div>`;
+    times.forEach((time, index) => {
+      const dataEntry = groupedData[date][time];
+      tableHtml += `
+          <div class="col-span-1 flex items-center justify-center ${
+            index !== times.length - 1
+              ? "border-r border-stroke dark:border-strokedark"
+              : ""
+          }">
+            ${dataEntry.temperature}/${dataEntry.humidity}
+          </div>`;
+    });
+    tableHtml += `</div>`;
+  });
+
+  tableHtml += `
+          </div>
+        </div>
+      </div>`;
+
+  await page.setContent(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Data Report</title>
+          <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+          <style>
+            .container {
+              width: 100%;
+              max-width: 100%;
+            }
+          </style>
+        </head>
+        <body class="font-sans">
+          <div class="container p-0">
+            <h1 class="text-4xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
+            <h2 class="text-center mb-8 text-xl uppercase">PERIOD: ${month} ${year}</h2>
+      
+            <div class="flex">
+              <div class=" w-1/2 ml-10">
+                ${tableHtml}
+              </div>
+      
+              <div class="flex flex-col w-1/2 mr-10 ">
+                <!-- Temperature Chart -->
+                <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5 pt-7.5 shadow-lg dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+                  <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+                    <div class="flex w-full flex-wrap gap-3 sm:gap-5">
+                      <div class="flex min-w-47.5"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div id="temperatureChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
+                  </div>
+                </div>
+      
+                <!-- Humidity Chart -->
+                <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5 pt-7.5 shadow-lg dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+                  <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
+                    <div class="flex w-full flex-wrap gap-3 sm:gap-5">
+                      <div class="flex min-w-47.5"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div id="humidityChart" class="-ml-5" style="width: 100%; height: 100%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+
+  await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/apexcharts" });
+
+  await page.evaluate(
+    (humidityData, temperatureData, labels) => {
+      const createChart = (
+        selector,
+        seriesName,
+        data,
+        color,
+        annotationText,
+        gradient
+      ) => {
+        const options = {
+          series: [
+            {
+              name: seriesName,
+              data: data,
+            },
+          ],
+          colors: [color],
+          chart: {
+            fontFamily: "Satoshi, sans-serif",
+            type: "area",
+            toolbar: {
+              show: false,
+            },
+            width: "500px",
+            height: "auto",
+            animations: {
+              enabled: false,
+            },
+          },
+          xaxis: {
+            type: "datetime",
+            categories: labels,
+            labels: {
+              format: "dd MMM",
+            },
+            axisBorder: {
+              show: false,
+            },
+            axisTicks: {
+              show: false,
+            },
+          },
+          yaxis: {
+            title: {
+              style: {
+                fontSize: "0px",
+              },
+            },
+          },
+          stroke: {
+            width: 2,
+            curve: "smooth",
+            colors: [color],
+            dropShadow: {
+              enabled: true,
+              top: 0,
+              left: 0,
+              blur: 50,
+              opacity: 1,
+              color: gradient,
+            },
+          },
+          fill: {
+            type: "gradient",
+            gradient: {
+              shade: "light",
+              type: "vertical",
+              shadeIntensity: 0.2,
+              gradientToColors: [gradient],
+              inverseColors: false,
+              opacityFrom: 0.4,
+              opacityTo: 0.2,
+              stops: [0, 90, 100],
+            },
+          },
+          responsive: [
+            {
+              breakpoint: 1024,
+              options: {
+                chart: {
+                  height: 300,
+                },
+              },
+            },
+            {
+              breakpoint: 1366,
+              options: {
+                chart: {
+                  height: 350,
+                },
+              },
+            },
+          ],
+          markers: {
+            size: 4,
+            colors: "#fff",
+            strokeColors: [color],
+            strokeWidth: 3,
+            strokeOpacity: 0.9,
+            strokeDashArray: 0,
+            fillOpacity: 1,
+            hover: {
+              size: undefined,
+              sizeOffset: 5,
+            },
+          },
+          dataLabels: {
+            enabled: false,
+          },
+          tooltip: {
+            x: {
+              format: "dd MMM yyyy",
+            },
+          },
+          grid: {
+            xaxis: {
+              lines: {
+                show: true,
+              },
+            },
+            yaxis: {
+              lines: {
+                show: true,
+              },
+            },
+          },
+          annotations: {
+            position: "back",
+            xaxis: [
+              {
+                x: new Date(labels[Math.floor(labels.length / 2)]).getTime(),
+                borderColor: "transparent",
+                label: {
+                  text: annotationText,
+                  style: {
+                    color: color,
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    background: "transparent",
+                  },
+                  offsetX: -30,
+                  offsetY: -20,
+                  orientation: "horizontal",
+                },
+              },
+            ],
+          },
+        };
+
+        const chart = new ApexCharts(document.querySelector(selector), options);
+        chart.render();
+      };
+
+      createChart(
+        "#humidityChart",
+        "Humidity",
+        humidityData,
+        "rgba(0, 128, 0, 0.5)",
+        "Humidity",
+        "#008000"
+      );
+      createChart(
+        "#temperatureChart",
+        "Temperature",
+        temperatureData,
+        "rgba(255, 0, 0, 0.5)",
+        "Temperature",
+        "#FF0000"
+      );
+    },
+    floatHumidityData,
+    floatTemperatureData,
+    stringLabels
+  );
+
+  await page.pdf({
+    path: "./combined_chart_table.pdf",
+    format: "A4",
+    landscape: true,
+    printBackground: true,
+  });
+
+  await browser.close();
+}
+
+const sendEmailForPreviousMonth = async (res, req, testMonth, testYear) => {
+    const now = new Date();
+    const currentMonth = testMonth || now.getMonth() + 1; // Use testMonth if provided, else current month
+    const currentYear = testYear || now.getFullYear(); // Use testYear if provided, else current year
+    let previousMonth;
+    let year;
+  
+    if (currentMonth === 1) {
+      // If current month is January, previous month is December of last year
+      previousMonth = 12;
+      year = currentYear - 1;
+    } else {
+      // Previous month is current month - 1
+      previousMonth = currentMonth - 1;
+      year = currentYear;
+    }
+  
+    const avgSql = `
+      SELECT 
+        DATE(date_stamp) as date,
+        AVG(temperature) as avg_temperature,
+        AVG(humidity) as avg_humidity
+      FROM 
+        stg_incremental_load_rpi
+      WHERE 
+        (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+        AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
+      GROUP BY 
+        DATE(date_stamp);
+    `;
+  
+    const detailSql = `
+      SELECT 
+        date_stamp as date,
+        time_stamp as time,
+        temperature,
+        humidity
+      FROM 
+        stg_incremental_load_rpi
+      WHERE 
+        (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+        AND date_stamp BETWEEN ? AND ?
+      ORDER BY 
+        date_stamp, time_stamp;
+    `;
+  
+    const startDate = `${year}-${previousMonth.toString().padStart(2, "0")}-01`;
+    const endDate = `${year}-${previousMonth
+      .toString()
+      .padStart(2, "0")}-${new Date(year, previousMonth, 0).getDate()}`;
+  
+    db.query(avgSql, [previousMonth, year], async (err, avgResults) => {
+      if (err) {
+        console.error("Error fetching average data for email:", err);
+        return;
+      }
+      const formattedAvgResults = avgResults.map((row) => ({
+        date: row.date,
+        avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
+        avg_humidity: parseFloat(row.avg_humidity).toFixed(2),
+      }));
+  
+      db.query(detailSql, [startDate, endDate], async (err, detailResults) => {
+        if (err) {
+          console.error("Error fetching detailed data for email:", err);
+          return;
+        }
+        const formattedDetailResults = detailResults.map((row) => ({
+          date: row.date,
+          time: row.time,
+          temperature: parseFloat(row.temperature).toFixed(2),
+          humidity: parseFloat(row.humidity).toFixed(2),
+        }));
+  
+        console.log("Formatted Average Results:", formattedAvgResults);
+        console.log("Formatted Detailed Results:", formattedDetailResults);
+  
+        try {
+          const humidityData = formattedAvgResults.map((row) => row.avg_humidity);
+          const temperatureData = formattedAvgResults.map(
+            (row) => row.avg_temperature
+          );
+          const labels = formattedAvgResults.map((row) => row.date);
+  
+          console.log("Humidity Data:", humidityData);
+          console.log("Temperature Data:", temperatureData);
+          console.log("Labels:", labels);
+  
+          const monthName = getMonthName(previousMonth);
+          await generatePdf(
+            humidityData,
+            temperatureData,
+            labels,
+            formattedDetailResults,
+            monthName,
+            year
+          );
+  
+          const pdfBuffer = await fs.promises.readFile(
+            "./combined_chart_table.pdf"
+          );
+  
+          let mailOptions = {
+            from: '"PEPITO THCheck" <alerts@yourdomain.com>',
+            to: "yudamulehensem@gmail.com",
+            subject: `Monthly Temperature and Humidity Report for ${getMonthName(
+              previousMonth
+            )} ${year}`,
+            html: `
+              <html>
+                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                  <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                    
+                    <header style="text-align: center; margin-bottom: 20px;">
+                      <h1>Monthly Temperature and Humidity Report</h1>
+                      <h2 style="color: #555;">${getMonthName(previousMonth)} ${year}</h2>
+                    </header>
+          
+                    <main>
+                      <p style="font-size: 16px; margin-bottom: 20px;">
+                        Dear Administrator,
+                      </p>
+                      <p style="font-size: 16px; margin-bottom: 20px;">
+                        Please find the attached charts and table for the monthly temperature and humidity data. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
+                      </p>
+                      <p style="font-size: 16px; margin-bottom: 20px;">
+                        We encourage you to review the data to ensure optimal conditions are maintained.
+                      </p>
+                      <p style="font-size: 16px; font-weight: bold;">
+                        Attachment: Report for ${getMonthName(previousMonth)} ${year}
+                      </p>
+                    </main>
+          
+                    <footer style="margin-top: 30px; text-align: center; color: #888;">
+                      <p style="font-size: 14px;">PEPITO THCheck</p>
+                      <p style="font-size: 14px;">Monitoring & Alerts Team</p>
+                      <p style="font-size: 14px;">
+                        <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
+                      </p>
+                    </footer>
+          
+                  </div>
+                </body>
+              </html>
+            `,
+            attachments: [
+              {
+                filename: `${getMonthName(previousMonth)} Report.pdf`,
+                content: pdfBuffer,
+                contentType: "application/pdf",
+              },
+            ],
+          };
+  
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              console.error("Error sending email:", error);
+              return;
+            }
+            console.log("Email sent: " + info.response);
+          });
+        } catch (error) {
+          console.error("Error generating PDF or sending email:", error);
+        }
+      });
+    });
+  };
+  
+  
+function getMonthName(monthNumber) {
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  return months[monthNumber - 1];
+}
+
+const sendAlertEmail = async (req, res) => {
+    const { temperature, date } = req.body;
+  
+    const formattedDate = new Date(date).toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).replace(/:\d{2}\s/, ' '); // Removes the minutes part.
+  
+    const mailOptions = {
+      from: '"PEPITO THCheck" <alerts@yourdomain.com>',
+      to: "yudamulehensem@gmail.com",
+      subject: "⚠️ Urgent Temperature Alert!",
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #333;">
+            <div style="border: 2px solid #ff0000; padding: 20px; border-radius: 5px; background-color: #fdd; max-width: 600px; margin: auto;">
+              <h2 style="color: #ff0000;">⚠️ Temperature Exceeds Threshold!</h2>
+              <p><strong>Current Temperature:</strong> ${temperature}°C</p>
+              <p><strong>Recorded At:</strong> ${formattedDate}</p>
+              <p style="font-weight: bold; color: #ff0000;">Immediate action is required to address the high temperature!</p>
+              <p>For further assistance, please contact the Temperature Monitoring team.</p>
+            </div>
+          </body>
+        </html>
+      `,
+    };
+    
+    
+  
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error);
+        return res.status(500).send("Failed to send email");
+      }
+      console.log("Email sent:", info.response);
+      res.send("Email sent successfully");
+    });
+  };
+
+module.exports = {
+    sendEmailForPreviousMonth,
+    sendAlertEmail,
+}
+

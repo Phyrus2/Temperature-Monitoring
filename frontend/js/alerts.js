@@ -129,8 +129,8 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
                 title: "Warning!",
                 html: `
                     <div style="text-align: center;">
-                        <p>Temperature exceeds 30 degrees</p>
-                        <p>Current temperature: ${temperature}°C</p>
+                        <p>Temperature Exceeds Threshold</p>
+                        <p>Current Temperature: ${temperature}°C</p>
                         <p>Recorded at ${formattedDate}</p>
                     </div>
                 `,
