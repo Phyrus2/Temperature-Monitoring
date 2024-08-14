@@ -51,6 +51,9 @@ app.get("/average-data", data.averageData);
 app.get("/detailed-data", data.detailedData);
 app.get("/data-by-date", data.dataByDate);
 app.post("/send-alert-email", email.sendAlertEmail);
+app.get("/inject", data.injectRandomLocID);
+app.post("/delete", data.deleteLocationData);
+app.get("/location", data.averageDataByLocation);
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
