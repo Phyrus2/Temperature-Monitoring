@@ -141,7 +141,7 @@ async function generatePdf(
         </div>
       </div>`;
 
-  await page.setContent(`
+      await page.setContent(`
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -155,6 +155,12 @@ async function generatePdf(
               width: 100%;
               max-width: 100%;
             }
+            .axis-info-global {
+              font-size: 0.875rem; /* Adjust the font size */
+              color: #4a5568; /* Adjust the text color */
+              text-align: center;
+              margin-top: 10px; /* Space above the info text */
+            }
           </style>
         </head>
         <body class="font-sans">
@@ -167,7 +173,7 @@ async function generatePdf(
                 ${tableHtml}
               </div>
       
-              <div class="flex flex-col w-1/2 mr-10 ">
+              <div class="flex flex-col w-1/2 mr-10">
                 <!-- Temperature Chart -->
                 <div class="chart-container flex-grow rounded-sm border border-stroke bg-white px-5 pt-7.5 shadow-lg dark:border-strokedark dark:bg-boxdark sm:px-7.5">
                   <div class="flex flex-wrap items-start justify-between gap-3 sm:flex-nowrap">
@@ -193,10 +199,15 @@ async function generatePdf(
                 </div>
               </div>
             </div>
+            <div class="axis-info-global">
+              X-axis: Date | Y-axis: Temperature (°C) / Humidity (%)
+            </div>
           </div>
         </body>
         </html>
       `);
+      
+      
 
   await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/apexcharts" });
 
@@ -210,6 +221,15 @@ async function generatePdf(
         annotationText,
         gradient
       ) => {
+        // Ensure labels array contains only dates in "dd/MM/yyyy" format
+        const formattedLabels = labels.map((label) => {
+          const date = new Date(label);
+          return date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            
+          });
+        });
+      
         const options = {
           series: [
             {
@@ -231,10 +251,15 @@ async function generatePdf(
             },
           },
           xaxis: {
-            type: "datetime",
-            categories: labels,
+            type: "category",
+            categories: formattedLabels,
             labels: {
-              format: "dd MMM",
+              show: true,
+              rotate: -45,
+              style: {
+                fontWeight: "normal",
+                fontSize: "10px",
+              },
             },
             axisBorder: {
               show: false,
@@ -249,6 +274,7 @@ async function generatePdf(
                 fontSize: "0px",
               },
             },
+            min: Math.min(...data) - 2, // Adjust min value to avoid extra space
           },
           stroke: {
             width: 2,
@@ -312,10 +338,13 @@ async function generatePdf(
           },
           tooltip: {
             x: {
-              format: "dd MMM yyyy",
+              format: "dd", // Tooltip format
             },
           },
           grid: {
+            padding: {
+              bottom: 0, // Remove extra space only at the bottom
+            },
             xaxis: {
               lines: {
                 show: true,
@@ -331,7 +360,7 @@ async function generatePdf(
             position: "back",
             xaxis: [
               {
-                x: new Date(labels[Math.floor(labels.length / 2)]).getTime(),
+                x: formattedLabels[Math.floor(formattedLabels.length / 2)],
                 borderColor: "transparent",
                 label: {
                   text: annotationText,
@@ -341,7 +370,7 @@ async function generatePdf(
                     fontWeight: "bold",
                     background: "transparent",
                   },
-                  offsetX: -30,
+                  offsetX: 0,
                   offsetY: -20,
                   orientation: "horizontal",
                 },
@@ -349,10 +378,16 @@ async function generatePdf(
             ],
           },
         };
-
+      
         const chart = new ApexCharts(document.querySelector(selector), options);
         chart.render();
       };
+      
+      
+      
+      
+      
+      
 
       createChart(
         "#humidityChart",
