@@ -106,6 +106,9 @@ const drawTemperatureChart = (data, isSingleDay) => {
       enabled: false,
     },
     grid: {
+      padding: {
+        bottom: -10, // Remove extra space only at the bottom
+      },
       xaxis: {
         lines: {
           show: true,
@@ -239,6 +242,9 @@ const drawHumidityChart = (data, isSingleDay) => {
       enabled: false,
     },
     grid: {
+      padding: {
+        bottom: -10, // Remove extra space only at the bottom
+      },
       xaxis: {
         lines: {
           show: true,
