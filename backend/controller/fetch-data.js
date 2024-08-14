@@ -259,6 +259,18 @@ const averageDataByLocation = async (req, res) => {
   });
 };
 
+const getLocationData = async (req, res)=> {
+  const sql = 'SELECT locID, locName FROM location';
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error fetching location data:', err);
+      return callback(err, null);
+    }
+    res.json( results);
+  });
+}
+
 
 
 module.exports = {
@@ -268,4 +280,5 @@ module.exports = {
   injectRandomLocID,
   deleteLocationData,
   averageDataByLocation,
+  getLocationData,
 };

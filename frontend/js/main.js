@@ -2,6 +2,7 @@ import { getDefaultDateRange } from "./filter.js";
 import { fetchDataAndDisplay } from "./fetch-data.js";
 import { displayErrorMessage } from "./error.js";
 import { resetToDefaultDateRange } from "./filter.js";
+import { fetchLocationData } from "./fetch-data.js";
 import { state } from "./config.js";
 
 // Fetch data and display on initial load
@@ -81,3 +82,6 @@ document.addEventListener("DOMContentLoaded", function () {
   );
   dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
 });
+
+// Call the function to populate the dropdown when the page loads
+window.onload = fetchLocationData;
