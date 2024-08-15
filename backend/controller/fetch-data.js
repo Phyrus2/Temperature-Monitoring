@@ -259,6 +259,52 @@ const averageDataByLocation = async (req, res) => {
   });
 };
 
+const dateByLocation = async (req, res) => {
+  const { date, location } = req.query;
+
+  // Check if both date and location parameters are provided
+  if (!date || !location) {
+    res.status(400).send("Date and location parameters are required");
+    return;
+  }
+
+  const query = `
+          SELECT 
+              time_stamp,
+              temperature,
+              humidity
+          FROM 
+              stg_incremental_load_rpi
+          WHERE 
+              date_stamp = ? AND location = ?
+          ORDER BY 
+              time_stamp
+      `;
+
+  db.query(query, [date, location], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      res.status(500).send("Error retrieving data");
+      return;
+    }
+
+    if (results.length === 0) {
+      res.status(404).send("No data found for the specified date and location");
+      return;
+    }
+
+    const formattedResults = results.map((row) => ({
+      time_stamp: row.time_stamp,
+      temperature: parseFloat(row.temperature).toFixed(2),
+      humidity: parseFloat(row.humidity).toFixed(2),
+    }));
+
+    res.json(formattedResults);
+  });
+};
+
+
+
 const getLocationData = async (req, res)=> {
   const sql = 'SELECT locID, locName FROM location';
 
@@ -281,4 +327,5 @@ module.exports = {
   deleteLocationData,
   averageDataByLocation,
   getLocationData,
+  dateByLocation,
 };

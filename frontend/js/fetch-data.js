@@ -139,7 +139,14 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
     return;
   }
 
-  // XMLHttpRequest for the location-based endpoint
+  const isSingleDay = startDate === endDate;
+
+  // Determine the appropriate endpoint based on the date range
+  const url = isSingleDay
+    ? `http://localhost:3000/date-location?date=${startDate}&location=${location}`
+    : `http://localhost:3000/average-location?startDate=${startDate}&endDate=${endDate}&location=${location}`;
+
+  // XMLHttpRequest for fetching data
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function () {
     if (this.readyState == 4) {
@@ -167,7 +174,6 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
             }
           }
 
-          const isSingleDay = startDate === endDate;
           updateStats(data, isSingleDay);
 
           // Always display charts
@@ -186,7 +192,7 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
           displayErrorMessage("Parsing Error", "Error parsing JSON data.");
         }
       } else {
-        console.error("XHR request failed with status: ");
+        console.error("XHR request failed with status: ", this.status);
         displayErrorMessage(
           "Data Not Found",
           "Failed to fetch data.",
@@ -196,12 +202,10 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
     }
   };
 
-  // URL for the location-based endpoint
-  const url = `http://localhost:3000/average-location?startDate=${startDate}&endDate=${endDate}&location=${location}`;
-
   xhr.open("GET", url, true);
   xhr.send();
 }
+
 
 
 function fetchDataAndDisplay(startDate, endDate) {
