@@ -1,13 +1,27 @@
 import { getDefaultDateRange } from "./filter.js";
-import { fetchDataAndDisplay } from "./fetch-data.js";
+import { fetchDataAndDisplay, handleLocationChange, initialDropdownSetup } from "./fetch-data.js";
 import { displayErrorMessage } from "./error.js";
 import { resetToDefaultDateRange } from "./filter.js";
 import { fetchLocationData } from "./fetch-data.js";
 import { state } from "./config.js";
 
-// Fetch data and display on initial load
-const defaultDateRange = getDefaultDateRange();
-fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate);
+
+
+// Ensure that initial setup happens before any fetch or data handling
+initialDropdownSetup();
+console.log("initial"); // Populate with initial or placeholder options
+
+// Now, call fetchLocationData() to get real data and update the dropdown
+fetchLocationData()
+  .then(location => {
+    const defaultDateRange = getDefaultDateRange();
+    fetchDataAndDisplay(defaultDateRange.startDate, defaultDateRange.endDate, location);
+  })
+  .catch(error => {
+    console.error("Error fetching location data: ", error);
+    displayErrorMessage("Location Error", "Failed to load location data.");
+  });
+
 
 document.addEventListener("DOMContentLoaded", (event) => {
   const defaultDateRange = getDefaultDateRange();
@@ -67,6 +81,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const defaultDates = getDefaultDateRange();
   document.getElementById("start-date").value = defaultDates.startDate;
   document.getElementById("end-date").value = defaultDates.endDate;
+  
 
   const dateRangeDisplay = document.getElementById("date-range-display");
   const formattedStartDate = new Date(
@@ -83,5 +98,17 @@ document.addEventListener("DOMContentLoaded", function () {
   dateRangeDisplay.innerText = `Data Period: ${formattedStartDate} - ${formattedEndDate}`;
 });
 
-// Call the function to populate the dropdown when the page loads
-window.onload = fetchLocationData;
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  // This ensures the function is accessible in the global scope
+ 
+
+  // Call handleLocationChange when the page loads to fetch data for the default location
+  handleLocationChange();
+});
+
+window.handleLocationChange = handleLocationChange;
+
+
+

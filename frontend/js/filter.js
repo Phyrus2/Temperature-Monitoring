@@ -51,10 +51,17 @@ function getDefaultDateRange() {
   const startDate = new Date();
   startDate.setDate(endDate.getDate() - 0);
 
+  // Set the default location ID or name
+  const defaultLocation = "1"; // Assuming 1 is the default location ID
+  // Alternatively, you can use a location name:
+  // const defaultLocation = "YourDefaultLocationName";
+
   return {
     startDate: startDate.toISOString().split("T")[0],
     endDate: endDate.toISOString().split("T")[0],
+    defaultLocation: defaultLocation,
   };
 }
+
 
 export { getDefaultDateRange, resetToDefaultDateRange, filterDataByDateRange };

@@ -1,11 +1,11 @@
 import { clearErrorMessage, displayErrorMessage } from "./error.js";
 import { handleTemperatureAlert } from "./alerts.js";
 import {
-  renderDetailedTable,
+  // renderDetailedTable,
   drawTemperatureChart,
   drawHumidityChart,
 } from "./content.js";
-import { resetToDefaultDateRange } from "./filter.js";
+import { resetToDefaultDateRange, getDefaultDateRange } from "./filter.js";
 
 // function fetchData(startDate, endDate, isFiltered = false, displayType) {
 //   // Existing XMLHttpRequest for other endpoint
@@ -131,12 +131,14 @@ import { resetToDefaultDateRange } from "./filter.js";
 
 
 function fetchData(startDate, endDate, isFiltered = false, displayType) {
-  const location = document.getElementById('store-picker').value;
+  // Get the selected location or use default value '1' if none is selected
+  const storePicker = document.getElementById('store-picker');
+  const location = storePicker.value || '1';
 
-  // Validate if location is selected
+  // Validate if location is set, using default '1' if necessary
   if (!location) {
-    displayErrorMessage("Location Error", "Please select a location.");
-    return;
+    // Default location is '1', so this should not be triggered with the default value
+    console.warn("No location selected, using default location '1'.");
   }
 
   const isSingleDay = startDate === endDate;
@@ -156,6 +158,20 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
           console.log("Raw response text:", responseText);
           var data = JSON.parse(responseText);
           console.log("Parsed data:", data);
+
+          // Safety check to ensure data is in the expected format
+          if (!Array.isArray(data) || data.length === 0) {
+            displayErrorMessage(
+              "Data Not Found",
+              "No data available or data format is incorrect."
+            );
+            var defaultDateRange = getDefaultDateRange();
+            fetchDataAndDisplay(
+              defaultDateRange.startDate,
+              defaultDateRange.endDate
+            );
+            return;
+          }
 
           if (isFiltered) {
             if (data.length === 0) {
@@ -184,9 +200,9 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
           drawHumidityChart(data, isSingleDay);
 
           // Display table if needed
-          if (displayType === "table") {
-            renderDetailedTable(data);
-          }
+          // if (displayType === "table") {
+          //   renderDetailedTable(data);
+          // }
         } catch (e) {
           console.error("Error parsing JSON: ", e);
           displayErrorMessage("Parsing Error", "Error parsing JSON data.");
@@ -208,8 +224,11 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
 
 
 
-function fetchDataAndDisplay(startDate, endDate) {
-  fetchData(startDate, endDate, true, "chart");
+
+
+function fetchDataAndDisplay(startDate, endDate, location) {
+  
+  fetchData(startDate, endDate,location, true, "chart");
 }
 
 function updateStats(data, isSingleDay) {
@@ -313,43 +332,49 @@ function updateStats(data, isSingleDay) {
 }
 
 function fetchLocationData() {
-  var xhrLocation = new XMLHttpRequest();
-  xhrLocation.onreadystatechange = function () {
-    if (this.readyState == 4) {
-      if (this.status == 200) {
-        try {
-          var responseTextLocation = this.responseText;
-          console.log("Raw response text (location):", responseTextLocation);
-          var dataLocation = JSON.parse(responseTextLocation);
-          console.log("Parsed data (location):", dataLocation); // Log the received data
+  return new Promise((resolve, reject) => {
+    var xhrLocation = new XMLHttpRequest();
+    xhrLocation.onreadystatechange = function () {
+      if (this.readyState == 4) {
+        if (this.status == 200) {
+          try {
+            var responseTextLocation = this.responseText;
+            var dataLocation = JSON.parse(responseTextLocation);
+            populateLocationDropdown(dataLocation);
 
-          // Assuming you want to populate a dropdown or display the location data
-          populateLocationDropdown(dataLocation);
-        } catch (e) {
-          console.error("Error parsing JSON (location): ", e);
-          displayErrorMessage(
-            "Parsing Error",
-            "Error parsing JSON data (location)."
-          );
+            const storePicker = document.getElementById('store-picker');
+            storePicker.value = getDefaultDateRange().defaultLocation;
+
+            setTimeout(() => {
+              resolve(storePicker.value); // Resolve with the selected location
+            }, 50);
+          } catch (e) {
+            console.error("Error parsing JSON (location): ", e);
+            reject(e);
+          }
+        } else {
+          console.error("XHR request for location data failed with status: ", this.status);
+          reject(new Error("Failed to fetch location data. Status: " + this.status));
         }
-      } else {
-        console.error(
-          "XHR request for location data failed with status: ",
-          this.status
-        );
-        displayErrorMessage(
-          "Data Not Found",
-          "Failed to fetch location data. Status: " + this.status
-        );
       }
-    }
-  };
+    };
 
-  // URL for the /location endpoint
-  const urlLocation = `http://localhost:3000/location`;
+    const urlLocation = `http://localhost:3000/location`;
+    xhrLocation.open("GET", urlLocation, true);
+    xhrLocation.send();
+  });
+}
 
-  xhrLocation.open("GET", urlLocation, true);
-  xhrLocation.send();
+
+function initialDropdownSetup() {
+  const storePicker = document.getElementById('store-picker');
+  storePicker.innerHTML = ''; // Clear existing options
+
+  // Optionally, add a placeholder option while loading actual data
+  const placeholderOption = document.createElement('option');
+  placeholderOption.value = '';
+  placeholderOption.textContent = 'Loading locations...';
+  storePicker.appendChild(placeholderOption);
 }
 
 function populateLocationDropdown(locations) {
@@ -362,8 +387,34 @@ function populateLocationDropdown(locations) {
     option.textContent = location.locName;
     storePicker.appendChild(option);
   });
+
+  // Explicitly set the dropdown to the default location
+  storePicker.value = getDefaultDateRange().defaultLocation;
+}
+
+function handleLocationChange() {
+  const storePicker = document.getElementById('store-picker');
+  // Get the selected location or use default value if none is selected
+  const location = storePicker.value || '1';
+
+  console.log("Location after dropdown set:", location); // Debugging
+
+  // Assuming you have default start and end dates
+  const defaultDateRange = getDefaultDateRange();
+  const startDate = defaultDateRange.startDate;
+  const endDate = defaultDateRange.endDate;
+
+  // Log the selected location and dates for debugging
+  console.log("Location selected:", location);
+  console.log("Date range:", startDate, endDate);
+
+  // Fetch data based on the selected location or default location
+  fetchData(startDate, endDate, location, true, 'table');
 }
 
 
 
-export { fetchData, fetchDataAndDisplay, updateStats,fetchLocationData };
+
+
+
+export { fetchData, fetchDataAndDisplay, updateStats,fetchLocationData, handleLocationChange, initialDropdownSetup, populateLocationDropdown };
