@@ -8,6 +8,116 @@ import {
 import{state} from "./config.js"
 import { resetToDefaultDateRange, getDefaultDateRange } from "./filter.js";
 
+
+
+
+function fetchDataAndDisplay(startDate, endDate, location) {
+  
+  fetchData(startDate, endDate,location, true, "chart");
+}
+
+function updateStats(data, isSingleDay) {
+  if (data.length === 0) return;
+
+  let highestTemp = -Infinity,
+    lowestTemp = Infinity;
+  let highestTempDate = "",
+    lowestTempDate = "";
+
+  let highestHumidity = -Infinity,
+    lowestHumidity = Infinity;
+  let highestHumidityDate = "",
+    lowestHumidityDate = "";
+
+  let temperatureAlertActive = false; // Flag to track if alert is active
+
+  // Find the latest data row
+  let latestRow = null;
+  let latestDate = -Infinity;
+
+  data.forEach((row) => {
+    const temperature = parseFloat(row.temperature || row.avg_temperature);
+    const humidity = parseFloat(row.humidity || row.avg_humidity);
+    let date;
+
+    if (isSingleDay) {
+      const baseDate = new Date().toISOString().split("T")[0];
+      date = `${baseDate}T${row.time_stamp}`;
+    } else {
+      date = row.date;
+    }
+
+    const dateObject = new Date(date);
+
+    if (isNaN(dateObject)) {
+      console.error("Missing or invalid date/time_stamp in row:", row);
+      return;
+    }
+
+    if (dateObject > latestDate) {
+      latestDate = dateObject;
+      latestRow = row;
+    }
+
+    if (temperature > highestTemp) {
+      highestTemp = temperature;
+      highestTempDate = dateObject;
+    }
+    if (temperature < lowestTemp) {
+      lowestTemp = temperature;
+      lowestTempDate = dateObject;
+    }
+    if (humidity > highestHumidity) {
+      highestHumidity = humidity;
+      highestHumidityDate = dateObject;
+    }
+    if (humidity < lowestHumidity) {
+      lowestHumidity = humidity;
+      lowestHumidityDate = dateObject;
+    }
+  });
+
+  const formatDate = (dateObj) => {
+    if (!dateObj) return "Invalid Date";
+
+    return isSingleDay
+      ? dateObj.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+      : dateObj.toLocaleDateString();
+  };
+
+  document.getElementById("highest-temperature").textContent =
+    highestTemp + "°C";
+  document.getElementById("highest-temperature-date").textContent =
+    formatDate(highestTempDate);
+  document.getElementById("lowest-temperature").textContent = lowestTemp + "°C";
+  document.getElementById("lowest-temperature-date").textContent =
+    formatDate(lowestTempDate);
+  document.getElementById("highest-humidity").textContent =
+    highestHumidity + "%";
+  document.getElementById("highest-humidity-date").textContent =
+    formatDate(highestHumidityDate);
+  document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
+  document.getElementById("lowest-humidity-date").textContent =
+    formatDate(lowestHumidityDate);
+
+  // Check if the latest temperature exceeds the threshold
+  if (latestRow) {
+    const latestTemperature = parseFloat(
+      latestRow.temperature || latestRow.avg_temperature
+    );
+    temperatureAlertActive = latestTemperature > 30;
+  }
+
+  // Handle temperature alert
+  handleTemperatureAlert(temperatureAlertActive, latestRow, latestDate);
+}
+
+
+// for no location feature
 // function fetchData(startDate, endDate, isFiltered = false, displayType) {
 //   // Existing XMLHttpRequest for other endpoint
 //   var xhr = new XMLHttpRequest();
@@ -131,6 +241,11 @@ import { resetToDefaultDateRange, getDefaultDateRange } from "./filter.js";
 // }
 
 
+
+
+
+
+// for location feature
 function fetchData(startDate, endDate, isFiltered = false, displayType) {
   // Get the selected location or use default value '1' if none is selected
   const storePicker = document.getElementById('store-picker');
@@ -277,115 +392,6 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
 
   xhrDetailed.open("GET", urlDetailed, true);
   xhrDetailed.send();
-}
-
-
-
-
-
-function fetchDataAndDisplay(startDate, endDate, location) {
-  
-  fetchData(startDate, endDate,location, true, "chart");
-}
-
-function updateStats(data, isSingleDay) {
-  if (data.length === 0) return;
-
-  let highestTemp = -Infinity,
-    lowestTemp = Infinity;
-  let highestTempDate = "",
-    lowestTempDate = "";
-
-  let highestHumidity = -Infinity,
-    lowestHumidity = Infinity;
-  let highestHumidityDate = "",
-    lowestHumidityDate = "";
-
-  let temperatureAlertActive = false; // Flag to track if alert is active
-
-  // Find the latest data row
-  let latestRow = null;
-  let latestDate = -Infinity;
-
-  data.forEach((row) => {
-    const temperature = parseFloat(row.temperature || row.avg_temperature);
-    const humidity = parseFloat(row.humidity || row.avg_humidity);
-    let date;
-
-    if (isSingleDay) {
-      const baseDate = new Date().toISOString().split("T")[0];
-      date = `${baseDate}T${row.time_stamp}`;
-    } else {
-      date = row.date;
-    }
-
-    const dateObject = new Date(date);
-
-    if (isNaN(dateObject)) {
-      console.error("Missing or invalid date/time_stamp in row:", row);
-      return;
-    }
-
-    if (dateObject > latestDate) {
-      latestDate = dateObject;
-      latestRow = row;
-    }
-
-    if (temperature > highestTemp) {
-      highestTemp = temperature;
-      highestTempDate = dateObject;
-    }
-    if (temperature < lowestTemp) {
-      lowestTemp = temperature;
-      lowestTempDate = dateObject;
-    }
-    if (humidity > highestHumidity) {
-      highestHumidity = humidity;
-      highestHumidityDate = dateObject;
-    }
-    if (humidity < lowestHumidity) {
-      lowestHumidity = humidity;
-      lowestHumidityDate = dateObject;
-    }
-  });
-
-  const formatDate = (dateObj) => {
-    if (!dateObj) return "Invalid Date";
-
-    return isSingleDay
-      ? dateObj.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })
-      : dateObj.toLocaleDateString();
-  };
-
-  document.getElementById("highest-temperature").textContent =
-    highestTemp + "°C";
-  document.getElementById("highest-temperature-date").textContent =
-    formatDate(highestTempDate);
-  document.getElementById("lowest-temperature").textContent = lowestTemp + "°C";
-  document.getElementById("lowest-temperature-date").textContent =
-    formatDate(lowestTempDate);
-  document.getElementById("highest-humidity").textContent =
-    highestHumidity + "%";
-  document.getElementById("highest-humidity-date").textContent =
-    formatDate(highestHumidityDate);
-  document.getElementById("lowest-humidity").textContent = lowestHumidity + "%";
-  document.getElementById("lowest-humidity-date").textContent =
-    formatDate(lowestHumidityDate);
-
-  // Check if the latest temperature exceeds the threshold
-  if (latestRow) {
-    const latestTemperature = parseFloat(
-      latestRow.temperature || latestRow.avg_temperature
-    );
-    temperatureAlertActive = latestTemperature > 30;
-  }
-
-  // Handle temperature alert
-  handleTemperatureAlert(temperatureAlertActive, latestRow, latestDate);
 }
 
 function fetchLocationData() {

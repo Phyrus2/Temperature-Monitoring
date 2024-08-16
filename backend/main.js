@@ -43,6 +43,12 @@ app.get("/average-location", data.averageDataByLocation);
 app.get("/location", data.getLocationData);
 app.get("/date-location", data.dateByLocation);
 app.get("/detailed-location", data.detailDataByLocation);
+
+
+
+
+
+// inject dummy data
 // Function to generate random temperature below 30 and humidity
 function generateRandomTemperature() {
   const temp = Math.random() * 10 + 20; // Generates temperature between 20 and 30

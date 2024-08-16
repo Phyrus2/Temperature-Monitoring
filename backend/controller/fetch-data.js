@@ -1,5 +1,8 @@
 const db = require("../database/database");
 
+
+
+//for no location feature
 const averageData = async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -44,56 +47,6 @@ const averageData = async (req, res) => {
     res.json(formattedResults);
   });
 };
-
-const detailDataByLocation = async (req, res) => {
-  const { startDate, endDate, location } = req.query;
-
-  if (!startDate || !endDate || !location) {
-    return res
-      .status(400)
-      .json({ error: "Start date, end date, and location are required" });
-  }
-
-  // SQL query to fetch data based on the hour and location
-  const query = `
-          SELECT 
-              date_stamp as date,
-              time_stamp as time,
-              temperature,
-              humidity
-          FROM 
-              stg_incremental_load_rpi
-          WHERE 
-              (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
-              AND date_stamp BETWEEN ? AND ?
-              AND location = ?
-          ORDER BY 
-              date_stamp, time_stamp;
-      `;
-
-  db.query(query, [startDate, endDate, location], (err, results) => {
-    if (err) {
-      console.error("Error executing query:", err);
-      return res.status(500).send("Error retrieving data");
-    }
-
-    if (results.length === 0) {
-      return res.status(404).send("No data found for the specified time range and location");
-    }
-
-    // Format results
-    const formattedResults = results.map((row) => ({
-      date: row.date,
-      time: row.time,
-      temperature: parseFloat(row.temperature).toFixed(2),
-      humidity: parseFloat(row.humidity).toFixed(2),
-    }));
-
-    // Send response
-    res.json(formattedResults);
-  });
-};
-
 
 const detailedData = async (req, res) => {
   const { startDate, endDate } = req.query;
@@ -185,6 +138,13 @@ const dataByDate = async (req, res) => {
   });
 };
 
+
+
+
+
+
+
+//for location feature
 const deleteLocationData = (req, res) => {
   // Query to set the location column to NULL for all rows
   const query = `
@@ -358,6 +318,54 @@ const dateByLocation = async (req, res) => {
       humidity: parseFloat(row.humidity).toFixed(2),
     }));
 
+    res.json(formattedResults);
+  });
+};
+const detailDataByLocation = async (req, res) => {
+  const { startDate, endDate, location } = req.query;
+
+  if (!startDate || !endDate || !location) {
+    return res
+      .status(400)
+      .json({ error: "Start date, end date, and location are required" });
+  }
+
+  // SQL query to fetch data based on the hour and location
+  const query = `
+          SELECT 
+              date_stamp as date,
+              time_stamp as time,
+              temperature,
+              humidity
+          FROM 
+              stg_incremental_load_rpi
+          WHERE 
+              (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+              AND date_stamp BETWEEN ? AND ?
+              AND location = ?
+          ORDER BY 
+              date_stamp, time_stamp;
+      `;
+
+  db.query(query, [startDate, endDate, location], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).send("Error retrieving data");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("No data found for the specified time range and location");
+    }
+
+    // Format results
+    const formattedResults = results.map((row) => ({
+      date: row.date,
+      time: row.time,
+      temperature: parseFloat(row.temperature).toFixed(2),
+      humidity: parseFloat(row.humidity).toFixed(2),
+    }));
+
+    // Send response
     res.json(formattedResults);
   });
 };
