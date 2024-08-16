@@ -1,10 +1,11 @@
 import { clearErrorMessage, displayErrorMessage } from "./error.js";
 import { handleTemperatureAlert } from "./alerts.js";
 import {
-  // renderDetailedTable,
+  renderDetailedTable,
   drawTemperatureChart,
   drawHumidityChart,
 } from "./content.js";
+import{state} from "./config.js"
 import { resetToDefaultDateRange, getDefaultDateRange } from "./filter.js";
 
 // function fetchData(startDate, endDate, isFiltered = false, displayType) {
@@ -220,6 +221,62 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
 
   xhr.open("GET", url, true);
   xhr.send();
+
+  // New XMLHttpRequest to call the /detailed-data endpoint
+  var xhrDetailed = new XMLHttpRequest();
+  xhrDetailed.onreadystatechange = function () {
+    if (this.readyState == 4) {
+      if (this.status == 200) {
+        try {
+          var responseTextDetailed = this.responseText;
+          console.log("Raw response text (detailed):", responseTextDetailed);
+          var dataDetailed = JSON.parse(responseTextDetailed);
+          console.log("Parsed data (detailed):", dataDetailed); // Log the received data
+          if (isFiltered) {
+            if (dataDetailed.length === 0) {
+              displayErrorMessage(
+                "Data Not Found",
+                "No detailed data available for the selected date range."
+              );
+              var defaultDateRange = getDefaultDateRange();
+              fetchDataAndDisplay(
+                defaultDateRange.startDate,
+                defaultDateRange.endDate
+              );
+              return;
+            } else {
+              clearErrorMessage();
+            }
+          }
+          // Display table if needed
+
+          renderDetailedTable(dataDetailed);
+          console.log("Detailed data");
+        } catch (e) {
+          console.error("Error parsing JSON (detailed): ", e);
+          displayErrorMessage(
+            "Parsing Error",
+            "Error parsing JSON data (detailed)."
+          );
+        }
+      } else {
+        console.error(
+          "XHR request for detailed data failed with status: ",
+          this.status
+        );
+        displayErrorMessage(
+          "Data Not Found",
+          "Failed to fetch detailed data. Status: " + this.status
+        );
+      }
+    }
+  };
+
+  // New URL for the /detailed-data endpoint
+  const urlDetailed = `http://localhost:3000/detailed-location?startDate=${startDate}&endDate=${endDate}&location=${location}`;
+
+  xhrDetailed.open("GET", urlDetailed, true);
+  xhrDetailed.send();
 }
 
 
@@ -394,23 +451,22 @@ function populateLocationDropdown(locations) {
 
 function handleLocationChange() {
   const storePicker = document.getElementById('store-picker');
-  // Get the selected location or use default value if none is selected
   const location = storePicker.value || '1';
 
   console.log("Location after dropdown set:", location); // Debugging
 
-  // Assuming you have default start and end dates
-  const defaultDateRange = getDefaultDateRange();
-  const startDate = defaultDateRange.startDate;
-  const endDate = defaultDateRange.endDate;
+  // Check if there are valid start and end dates stored in the state from the filter
+  const startDate = state.lastValidStartDate || getDefaultDateRange().startDate;
+  const endDate = state.lastValidEndDate || getDefaultDateRange().endDate;
 
   // Log the selected location and dates for debugging
   console.log("Location selected:", location);
   console.log("Date range:", startDate, endDate);
 
-  // Fetch data based on the selected location or default location
+  // Fetch data based on the selected location and the current date range
   fetchData(startDate, endDate, location, true, 'table');
 }
+
 
 
 

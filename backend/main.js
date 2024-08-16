@@ -1,10 +1,10 @@
 const express = require("express");
-const cron = require("node-cron");
 const cors = require("cors"); // Import cors module
 const email = require("../backend/controller/email");
 const data = require("../backend/controller/fetch-data");
 const schedule = require("node-schedule");
 const db = require("./database/database");
+
 
 const app = express();
 const port = 3000;
@@ -30,21 +30,6 @@ schedule.scheduleJob(rule, async () => {
   }
 });
 
-// cron.schedule(
-//   '0 23 L * *',
-//   async () => {
-//     try {
-//       email.sendEmailForPreviousMonth();
-//       console.log("Email sent successfully");
-//     } catch (error) {
-//       console.error("Error sending email:", error);
-//     }
-//   },
-//   {
-//     timezone: "Asia/Makassar", // Adjust to WITA timezone
-//   }
-// );
-
 app.get("/test-email", (req, res) => {
   email.sendEmailForCurrentMonth(res, req, 5, 2024); // Example: Testing with June 2024
 });
@@ -57,6 +42,7 @@ app.post("/delete", data.deleteLocationData);
 app.get("/average-location", data.averageDataByLocation);
 app.get("/location", data.getLocationData);
 app.get("/date-location", data.dateByLocation);
+app.get("/detailed-location", data.detailDataByLocation);
 // Function to generate random temperature below 30 and humidity
 function generateRandomTemperature() {
   const temp = Math.random() * 10 + 20; // Generates temperature between 20 and 30

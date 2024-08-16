@@ -45,6 +45,56 @@ const averageData = async (req, res) => {
   });
 };
 
+const detailDataByLocation = async (req, res) => {
+  const { startDate, endDate, location } = req.query;
+
+  if (!startDate || !endDate || !location) {
+    return res
+      .status(400)
+      .json({ error: "Start date, end date, and location are required" });
+  }
+
+  // SQL query to fetch data based on the hour and location
+  const query = `
+          SELECT 
+              date_stamp as date,
+              time_stamp as time,
+              temperature,
+              humidity
+          FROM 
+              stg_incremental_load_rpi
+          WHERE 
+              (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+              AND date_stamp BETWEEN ? AND ?
+              AND location = ?
+          ORDER BY 
+              date_stamp, time_stamp;
+      `;
+
+  db.query(query, [startDate, endDate, location], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).send("Error retrieving data");
+    }
+
+    if (results.length === 0) {
+      return res.status(404).send("No data found for the specified time range and location");
+    }
+
+    // Format results
+    const formattedResults = results.map((row) => ({
+      date: row.date,
+      time: row.time,
+      temperature: parseFloat(row.temperature).toFixed(2),
+      humidity: parseFloat(row.humidity).toFixed(2),
+    }));
+
+    // Send response
+    res.json(formattedResults);
+  });
+};
+
+
 const detailedData = async (req, res) => {
   const { startDate, endDate } = req.query;
 
@@ -149,7 +199,9 @@ const deleteLocationData = (req, res) => {
       return;
     }
     console.log(`Cleared location data from ${result.affectedRows} rows`);
-    res.status(200).send(`${result.affectedRows} rows updated to clear location data`);
+    res
+      .status(200)
+      .send(`${result.affectedRows} rows updated to clear location data`);
   });
 };
 
@@ -174,7 +226,7 @@ const injectRandomLocID = (req, res) => {
     }
 
     // Step 2: Generate random location numbers for each date
-    const updatePromises = dates.map(dateObj => {
+    const updatePromises = dates.map((dateObj) => {
       const randomLocation = Math.floor(Math.random() * 4) + 1;
       const updateQuery = `
         UPDATE stg_incremental_load_rpi
@@ -182,30 +234,39 @@ const injectRandomLocID = (req, res) => {
         WHERE date_stamp = ? AND (location IS NULL OR location = '');
       `;
       return new Promise((resolve, reject) => {
-        db.query(updateQuery, [randomLocation, dateObj.date_stamp], (err, result) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(result.affectedRows);
+        db.query(
+          updateQuery,
+          [randomLocation, dateObj.date_stamp],
+          (err, result) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(result.affectedRows);
+            }
           }
-        });
+        );
       });
     });
 
     // Step 3: Execute all updates and respond
     Promise.all(updatePromises)
-      .then(results => {
+      .then((results) => {
         const totalUpdatedRows = results.reduce((sum, num) => sum + num, 0);
-        console.log(`Updated ${totalUpdatedRows} rows with random values based on date`);
-        res.status(200).send(`${totalUpdatedRows} rows updated with random values based on date`);
+        console.log(
+          `Updated ${totalUpdatedRows} rows with random values based on date`
+        );
+        res
+          .status(200)
+          .send(
+            `${totalUpdatedRows} rows updated with random values based on date`
+          );
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Error updating location column:", err);
         res.status(500).send("Error updating location column");
       });
   });
 };
-
 
 const averageDataByLocation = async (req, res) => {
   const { startDate, endDate, location } = req.query;
@@ -217,9 +278,7 @@ const averageDataByLocation = async (req, res) => {
   }
 
   if (!location) {
-    return res
-      .status(400)
-      .json({ error: "Location is required" });
+    return res.status(400).json({ error: "Location is required" });
   }
 
   const query = `
@@ -303,21 +362,17 @@ const dateByLocation = async (req, res) => {
   });
 };
 
-
-
-const getLocationData = async (req, res)=> {
-  const sql = 'SELECT locID, locName FROM location';
+const getLocationData = async (req, res) => {
+  const sql = "SELECT locID, locName FROM location";
 
   db.query(sql, (err, results) => {
     if (err) {
-      console.error('Error fetching location data:', err);
+      console.error("Error fetching location data:", err);
       return callback(err, null);
     }
-    res.json( results);
+    res.json(results);
   });
-}
-
-
+};
 
 module.exports = {
   averageData,
@@ -328,4 +383,5 @@ module.exports = {
   averageDataByLocation,
   getLocationData,
   dateByLocation,
+  detailDataByLocation,
 };

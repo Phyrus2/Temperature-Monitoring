@@ -272,82 +272,82 @@ const drawHumidityChart = (data, isSingleDay) => {
   }
 };
 
-// function renderDetailedTable(data) {
-//   const tableBody = document.getElementById("data-table-body");
-//   tableBody.innerHTML = ""; // Clear existing rows
+function renderDetailedTable(data) {
+  const tableBody = document.getElementById("data-table-body");
+  tableBody.innerHTML = ""; // Clear existing rows
 
-//   // Define the times that should appear in the table
-//   const times = [
-//     "07:00:00",
-//     "10:00:00",
-//     "13:00:00",
-//     "16:00:00",
-//     "19:00:00",
-//     "22:00:00",
-//   ];
+  // Define the times that should appear in the table
+  const times = [
+    "07:00:00",
+    "10:00:00",
+    "13:00:00",
+    "16:00:00",
+    "19:00:00",
+    "22:00:00",
+  ];
 
-//   // Helper function to get time in HH:00:00 format
-//   const formatTime = (time) => time.split(":").slice(0, 2).join(":") + ":00";
+  // Helper function to get time in HH:00:00 format
+  const formatTime = (time) => time.split(":").slice(0, 2).join(":") + ":00";
 
-//   // Group the data by date and time range
-//   const groupedData = data.reduce((acc, curr) => {
-//     const date = new Date(curr.date).toLocaleDateString();
-//     const timeFormatted = formatTime(curr.time);
-//     const hour = parseInt(curr.time.split(":")[0], 10);
+  // Group the data by date and time range
+  const groupedData = data.reduce((acc, curr) => {
+    const date = new Date(curr.date).toLocaleDateString();
+    const timeFormatted = formatTime(curr.time);
+    const hour = parseInt(curr.time.split(":")[0], 10);
 
-//     // Initialize the data structure if it doesn't exist
-//     if (!acc[date]) {
-//       acc[date] = {
-//         "07:00:00": { temperature: "-", humidity: "-" },
-//         "10:00:00": { temperature: "-", humidity: "-" },
-//         "13:00:00": { temperature: "-", humidity: "-" },
-//         "16:00:00": { temperature: "-", humidity: "-" },
-//         "19:00:00": { temperature: "-", humidity: "-" },
-//         "22:00:00": { temperature: "-", humidity: "-" },
-//       };
-//     }
+    // Initialize the data structure if it doesn't exist
+    if (!acc[date]) {
+      acc[date] = {
+        "07:00:00": { temperature: "-", humidity: "-" },
+        "10:00:00": { temperature: "-", humidity: "-" },
+        "13:00:00": { temperature: "-", humidity: "-" },
+        "16:00:00": { temperature: "-", humidity: "-" },
+        "19:00:00": { temperature: "-", humidity: "-" },
+        "22:00:00": { temperature: "-", humidity: "-" },
+      };
+    }
 
-//     // Check if the time is within the range of the nearest hour slots
-//     times.forEach((time) => {
-//       const timeHour = parseInt(time.split(":")[0], 10);
-//       if (hour >= timeHour - 1 && hour <= timeHour + 1) {
-//         acc[date][time] = {
-//           temperature: curr.temperature,
-//           humidity: curr.humidity,
-//         };
-//       }
-//     });
+    // Check if the time is within the range of the nearest hour slots
+    times.forEach((time) => {
+      const timeHour = parseInt(time.split(":")[0], 10);
+      if (hour >= timeHour - 1 && hour <= timeHour + 1) {
+        acc[date][time] = {
+          temperature: curr.temperature,
+          humidity: curr.humidity,
+        };
+      }
+    });
 
-//     return acc;
-//   }, {});
+    return acc;
+  }, {});
 
-//   // Create a row for each date
-//   Object.keys(groupedData).forEach((date) => {
-//     const divRow = document.createElement("div");
-//     divRow.className =
-//       "grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5";
+  // Create a row for each date
+  Object.keys(groupedData).forEach((date) => {
+    const divRow = document.createElement("div");
+    divRow.className =
+      "grid grid-cols-7 border-t border-stroke dark:border-strokedark px-4 py-4.5 md:px-6 2xl:px-7.5";
 
-//     // Create and append the date column with right border
-//     const dateDiv = document.createElement("div");
-//     dateDiv.className =
-//       "col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark";
-//     dateDiv.textContent = date;
-//     divRow.appendChild(dateDiv);
+    // Create and append the date column with right border
+    const dateDiv = document.createElement("div");
+    dateDiv.className =
+      "col-span-1 flex items-center justify-center border-r border-stroke dark:border-strokedark";
+    dateDiv.textContent = date;
+    divRow.appendChild(dateDiv);
 
-//     // Create and append the time slots with right border, except the last one
-//     times.forEach((time, index) => {
-//       const timeDiv = document.createElement("div");
-//       // Add a right border to all columns except the last one
-//       timeDiv.className = `col-span-1 flex items-center justify-center ${
-//         index !== times.length - 1 ? "border-r" : ""
-//       } border-stroke dark:border-strokedark`;
-//       const dataEntry = groupedData[date][time];
-//       timeDiv.textContent = `${dataEntry.temperature}/${dataEntry.humidity}`;
-//       divRow.appendChild(timeDiv);
-//     });
+    // Create and append the time slots with right border, except the last one
+    times.forEach((time, index) => {
+      const timeDiv = document.createElement("div");
+      // Add a right border to all columns except the last one
+      timeDiv.className = `col-span-1 flex items-center justify-center ${
+        index !== times.length - 1 ? "border-r" : ""
+      } border-stroke dark:border-strokedark`;
+      const dataEntry = groupedData[date][time];
+      timeDiv.textContent = `${dataEntry.temperature}/${dataEntry.humidity}`;
+      divRow.appendChild(timeDiv);
+    });
 
-//     tableBody.appendChild(divRow);
-//   });
-// }
+    tableBody.appendChild(divRow);
+  });
+}
 
-export { drawTemperatureChart, drawHumidityChart };
+export { drawTemperatureChart, drawHumidityChart, renderDetailedTable };
