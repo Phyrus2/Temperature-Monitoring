@@ -156,18 +156,12 @@ async function generatePdf(
               width: 100%;
               max-width: 100%;
             }
-            .axis-info-global {
-              font-size: 0.875rem; /* Adjust the font size */
-              color: #4a5568; /* Adjust the text color */
-              text-align: center;
-              margin-top: 10px; /* Space above the info text */
-            }
           </style>
         </head>
         <body class="font-sans">
           <div class="container p-0">
             <h1 class="text-4xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
-            <h2 class="text-center mb-8 text-xl uppercase">PERIOD: ${month} ${year}</h2>
+            <h2 class="text-center mb-3 text-xl uppercase">PERIOD: ${month} ${year}</h2>
       
             <div class="flex">
               <div class=" w-1/2 ml-10">
@@ -200,9 +194,9 @@ async function generatePdf(
                 </div>
               </div>
             </div>
-            <div class="axis-info-global">
+           <div class="text-sm text-gray-700 text-center mt-5">
               X-axis: Date | Y-axis: Temperature (°C) / Humidity (%)
-            </div>
+          </div>
           </div>
         </body>
         </html>
