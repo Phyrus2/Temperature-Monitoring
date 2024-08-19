@@ -5,7 +5,6 @@ const data = require("../backend/controller/fetch-data");
 const schedule = require("node-schedule");
 const db = require("./database/database");
 
-
 const app = express();
 const port = 3000;
 app.use(cors());
@@ -30,9 +29,6 @@ schedule.scheduleJob(rule, async () => {
   }
 });
 
-app.get("/test-email", (req, res) => {
-  email.sendEmailForCurrentMonth(res, req, 5, 2024); // Example: Testing with June 2024
-});
 app.get("/average-data", data.averageData);
 app.get("/detailed-data", data.detailedData);
 app.get("/data-by-date", data.dataByDate);
@@ -45,8 +41,44 @@ app.get("/date-location", data.dateByLocation);
 app.get("/detailed-location", data.detailDataByLocation);
 
 
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.get("/test-email", (req, res) => {
+  email.sendEmailForCurrentMonth(res, req, 5, 2024); // Example: Testing with June 2024
+});
 
 // inject dummy data
 // Function to generate random temperature below 30 and humidity
@@ -102,7 +134,3 @@ app.get('/dummy', (req, res) => {
   });
 });
 
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
