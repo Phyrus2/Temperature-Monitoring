@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const puppeteer = require("puppeteer");
 const fs = require("fs"); // Import the fs module
 const db = require("../database/database");
-require('dotenv').config();
+require("dotenv").config();
 
 let transporter = nodemailer.createTransport({
   service: "gmail",
@@ -142,7 +142,7 @@ async function generatePdf(
         </div>
       </div>`;
 
-      await page.setContent(`
+  await page.setContent(`
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -156,18 +156,12 @@ async function generatePdf(
               width: 100%;
               max-width: 100%;
             }
-            .axis-info-global {
-              font-size: 0.875rem; /* Adjust the font size */
-              color: #4a5568; /* Adjust the text color */
-              text-align: center;
-              margin-top: 10px; /* Space above the info text */
-            }
           </style>
         </head>
         <body class="font-sans">
           <div class="container p-0">
             <h1 class="text-4xl font-bold text-center">TEMPERATURE & HUMIDITY SERVER MONITORING</h1>
-            <h2 class="text-center mb-8 text-xl uppercase">PERIOD: ${month} ${year}</h2>
+            <h2 class="text-center mb-5 text-xl uppercase">PERIOD: ${month} ${year}</h2>
       
             <div class="flex">
               <div class=" w-1/2 ml-10">
@@ -200,15 +194,13 @@ async function generatePdf(
                 </div>
               </div>
             </div>
-            <div class="axis-info-global">
-              X-axis: Date | Y-axis: Temperature (°C) / Humidity (%)
+            <div class="text-sm text-gray-700 text-center mt-5">
+                X-axis: Date | Y-axis: Temperature (°C) / Humidity (%)
             </div>
           </div>
         </body>
         </html>
       `);
-      
-      
 
   await page.addScriptTag({ url: "https://cdn.jsdelivr.net/npm/apexcharts" });
 
@@ -227,10 +219,9 @@ async function generatePdf(
           const date = new Date(label);
           return date.toLocaleDateString("en-GB", {
             day: "2-digit",
-            
           });
         });
-      
+
         const options = {
           series: [
             {
@@ -379,16 +370,10 @@ async function generatePdf(
             ],
           },
         };
-      
+
         const chart = new ApexCharts(document.querySelector(selector), options);
         chart.render();
       };
-      
-      
-      
-      
-      
-      
 
       createChart(
         "#humidityChart",
