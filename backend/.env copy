@@ -1,0 +1,7 @@
+DB_HOST=your host
+DB_USER=your user
+DB_PASSWORD= your password
+DB_DATABASE=your database name
+EMAIL=email for sender
+EMAIL_PASS=email pass or app pass email
+RECEPIENT=email for receiver

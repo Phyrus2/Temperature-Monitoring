@@ -746,7 +746,7 @@ const sendEmailForCurrentMonth = async (req, res, testMonth, testYear) => {
       });
     });
 
-    console.log("All emails sent successfully.");
+    console.log("Email sent successfully.");
   } catch (error) {
     console.error("Error in processing:", error);
   }
