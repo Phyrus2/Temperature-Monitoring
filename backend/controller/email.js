@@ -20,7 +20,8 @@ async function generatePdf(
   labelsData,
   tableData,
   month,
-  year
+  year,
+  location
 ) {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -407,7 +408,7 @@ async function generatePdf(
   );
 
   await page.pdf({
-    path: "../assets/Montly Report.pdf",
+    path: `../assets/${location}_Monthly_Report.pdf`,
     format: "A4",
     landscape: true,
     printBackground: true,
@@ -588,167 +589,172 @@ const sendEmailForPreviousMonth = async (res, req, testMonth, testYear) => {
   });
 };
 
-const sendEmailForCurrentMonth = async (res, req, testMonth, testYear) => {
+const sendEmailForCurrentMonth = async (req, res, testMonth, testYear) => {
   const now = new Date();
   const currentMonth = testMonth || now.getMonth() + 1; // Use testMonth if provided, else current month
   const currentYear = testYear || now.getFullYear(); // Use testYear if provided, else current year
 
-  const startDate = `${currentYear}-${currentMonth
-    .toString()
-    .padStart(2, "0")}-01`;
-  const endDate = `${currentYear}-${currentMonth
-    .toString()
-    .padStart(2, "0")}-${new Date(currentYear, currentMonth, 0).getDate()}`;
+  const startDate = `${currentYear}-${currentMonth.toString().padStart(2, "0")}-01`;
+  const endDate = `${currentYear}-${currentMonth.toString().padStart(2, "0")}-${new Date(currentYear, currentMonth, 0).getDate()}`;
 
   const avgSql = `
-      SELECT 
-        DATE(date_stamp) as date,
-        AVG(temperature) as avg_temperature,
-        AVG(humidity) as avg_humidity
-      FROM 
-        stg_incremental_load_rpi
-      WHERE 
-        (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
-        AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
-      GROUP BY 
-        DATE(date_stamp);
-    `;
+  SELECT 
+    DATE(date_stamp) as date,
+    AVG(temperature) as avg_temperature,
+    AVG(humidity) as avg_humidity,
+    l.locName as location
+  FROM 
+    stg_incremental_load_rpi s
+    JOIN location l ON s.location = l.locID
+  WHERE 
+    (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+    AND MONTH(date_stamp) = ? AND YEAR(date_stamp) = ?
+  GROUP BY 
+    DATE(date_stamp), l.locName;
+`;
 
-  const detailSql = `
-      SELECT 
-        date_stamp as date,
-        time_stamp as time,
-        temperature,
-        humidity
-      FROM 
-        stg_incremental_load_rpi
-      WHERE 
-        (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
-        AND date_stamp BETWEEN ? AND ?
-      ORDER BY 
-        date_stamp, time_stamp;
-    `;
 
-  db.query(avgSql, [currentMonth, currentYear], async (err, avgResults) => {
-    if (err) {
-      console.error("Error fetching average data for email:", err);
-      return;
-    }
+const detailSql = `
+SELECT 
+  date_stamp as date,
+  time_stamp as time,
+  temperature,
+  humidity,
+  l.locName as location
+FROM 
+  stg_incremental_load_rpi s
+  JOIN location l ON s.location = l.locID
+WHERE 
+  (HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22))
+  AND date_stamp BETWEEN ? AND ?
+  AND l.locName = ?
+ORDER BY 
+  date_stamp, time_stamp;
+`;
+
+try {
+  // Fetch distinct location names
+  const locations = await new Promise((resolve, reject) => {
+    db.query('SELECT DISTINCT locName as location FROM location l JOIN stg_incremental_load_rpi s ON l.locID = s.location', (err, results) => {
+      if (err) reject(err);
+      else resolve(results);
+    });
+  });
+
+  const emailPromises = locations.map(async (loc) => {
+    const location = loc.location;
+
+    const avgResults = await new Promise((resolve, reject) => {
+      db.query(avgSql, [currentMonth, currentYear], (err, results) => {
+        if (err) reject(err);
+        else resolve(results.filter(row => row.location === location));
+      });
+    });
+
     const formattedAvgResults = avgResults.map((row) => ({
       date: row.date,
       avg_temperature: parseFloat(row.avg_temperature).toFixed(2),
       avg_humidity: parseFloat(row.avg_humidity).toFixed(2),
     }));
 
-    db.query(detailSql, [startDate, endDate], async (err, detailResults) => {
-      if (err) {
-        console.error("Error fetching detailed data for email:", err);
-        return;
-      }
-      const formattedDetailResults = detailResults.map((row) => ({
-        date: row.date,
-        time: row.time,
-        temperature: parseFloat(row.temperature).toFixed(2),
-        humidity: parseFloat(row.humidity).toFixed(2),
-      }));
+    const detailResults = await new Promise((resolve, reject) => {
+      db.query(detailSql, [startDate, endDate, location], (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
 
-      console.log("Formatted Average Results:", formattedAvgResults);
-      console.log("Formatted Detailed Results:", formattedDetailResults);
+    const formattedDetailResults = detailResults.map((row) => ({
+      date: row.date,
+      time: row.time,
+      temperature: parseFloat(row.temperature).toFixed(2),
+      humidity: parseFloat(row.humidity).toFixed(2),
+    }));
 
-      try {
-        const humidityData = formattedAvgResults.map((row) => row.avg_humidity);
-        const temperatureData = formattedAvgResults.map(
-          (row) => row.avg_temperature
-        );
-        const labels = formattedAvgResults.map((row) => row.date);
+    const humidityData = formattedAvgResults.map((row) => row.avg_humidity);
+    const temperatureData = formattedAvgResults.map((row) => row.avg_temperature);
+    const labels = formattedAvgResults.map((row) => row.date);
 
-        console.log("Humidity Data:", humidityData);
-        console.log("Temperature Data:", temperatureData);
-        console.log("Labels:", labels);
+    const monthName = getMonthName(currentMonth);
+    await generatePdf(
+      humidityData,
+      temperatureData,
+      labels,
+      formattedDetailResults,
+      monthName,
+      currentYear,
+      location // Pass location name to generatePdf for file naming
+    );
 
-        const monthName = getMonthName(currentMonth);
-        await generatePdf(
-          humidityData,
-          temperatureData,
-          labels,
-          formattedDetailResults,
-          monthName,
-          currentYear
-        );
+    const pdfBuffer = await fs.promises.readFile(`../assets/${location}_Monthly_Report.pdf`);
 
-        const pdfBuffer = await fs.promises.readFile(
-          "../assets/Montly Report.pdf"
-        );
+    const mailOptions = {
+      from: '"PEPITO THCheck" <alerts@yourdomain.com>',
+      to: "yudamulehensem@gmail.com",
+      subject: `Monthly Temperature and Humidity Report for ${location} - ${getMonthName(currentMonth)} ${currentYear}`,
+      html: `
+        <html>
+          <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+              <header style="text-align: center; margin-bottom: 20px;">
+                <h1>Monthly Temperature and Humidity Report</h1>
+                <h2 style="color: #555;">${getMonthName(currentMonth)} ${currentYear}</h2>
+              </header>
+              <main>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                  Dear Administrator,
+                </p>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                  Please find the attached charts and table for the monthly temperature and humidity data for ${location}. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
+                </p>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                  We encourage you to review the data to ensure optimal conditions are maintained.
+                </p>
+                <p style="font-size: 16px; font-weight: bold;">
+                  Attachment: Report for ${getMonthName(currentMonth)} ${currentYear} - ${location}
+                </p>
+              </main>
+              <footer style="margin-top: 30px; text-align: center; color: #888;">
+                <p style="font-size: 14px;">PEPITO THCheck</p>
+                <p style="font-size: 14px;">Monitoring & Alerts Team</p>
+                <p style="font-size: 14px;">
+                  <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
+                </p>
+              </footer>
+            </div>
+          </body>
+        </html>
+      `,
+      attachments: [
+        {
+          filename: `${location}_${getMonthName(currentMonth)}_Report.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    };
 
-        let mailOptions = {
-          from: '"PEPITO THCheck" <alerts@yourdomain.com>',
-          to: "yudamulehensem@gmail.com",
-          subject: `Monthly Temperature and Humidity Report for ${getMonthName(
-            currentMonth
-          )} ${currentYear}`,
-          html: `
-              <html>
-                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                  <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                    
-                    <header style="text-align: center; margin-bottom: 20px;">
-                      <h1>Monthly Temperature and Humidity Report</h1>
-                      <h2 style="color: #555;">${getMonthName(
-                        currentMonth
-                      )} ${currentYear}</h2>
-                    </header>
-          
-                    <main>
-                      <p style="font-size: 16px; margin-bottom: 20px;">
-                        Dear Administrator,
-                      </p>
-                      <p style="font-size: 16px; margin-bottom: 20px;">
-                        Please find the attached charts and table for the monthly temperature and humidity data. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
-                      </p>
-                      <p style="font-size: 16px; margin-bottom: 20px;">
-                        We encourage you to review the data to ensure optimal conditions are maintained.
-                      </p>
-                      <p style="font-size: 16px; font-weight: bold;">
-                        Attachment: Report for ${getMonthName(
-                          currentMonth
-                        )} ${currentYear}
-                      </p>
-                    </main>
-          
-                    <footer style="margin-top: 30px; text-align: center; color: #888;">
-                      <p style="font-size: 14px;">PEPITO THCheck</p>
-                      <p style="font-size: 14px;">Monitoring & Alerts Team</p>
-                      <p style="font-size: 14px;">
-                        <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
-                      </p>
-                    </footer>
-          
-                  </div>
-                </body>
-              </html>
-            `,
-          attachments: [
-            {
-              filename: `${getMonthName(currentMonth)} Report.pdf`,
-              content: pdfBuffer,
-              contentType: "application/pdf",
-            },
-          ],
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error("Error sending email:", error);
-            return;
-          }
-          console.log("Email sent: " + info.response);
-        });
-      } catch (error) {
-        console.error("Error generating PDF or sending email:", error);
-      }
+    return new Promise((resolve, reject) => {
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+          reject(error);
+        } else {
+          console.log("Email sent for " + location + ": " + info.response);
+          resolve(info.response);
+        }
+      });
     });
   });
+
+  await Promise.all(emailPromises);
+  console.log("All emails sent successfully.");
+} catch (error) {
+  console.error("Error in processing:", error);
+}
 };
+
+
 
 function getMonthName(monthNumber) {
   const months = [
