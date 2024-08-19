@@ -2,12 +2,13 @@ const nodemailer = require("nodemailer");
 const puppeteer = require("puppeteer");
 const fs = require("fs"); // Import the fs module
 const db = require("../database/database");
+require('dotenv').config();
 
 let transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "madeyudaadiwinata@gmail.com",
-    pass: "yakt dbuj midb bdle", // Replace with actual password
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASS, // Replace with actual password
   },
   logger: true,
   debug: true,
