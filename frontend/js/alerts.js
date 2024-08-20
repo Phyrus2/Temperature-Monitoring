@@ -112,33 +112,51 @@ function checkAllLocationsForAlerts(startDate, endDate) {
     .then(response => response.json())
     .then(data => {
       if (Array.isArray(data)) {
-        data.forEach(alert => {
-          // Call handleTemperatureAlert with the alert data
-          handleTemperatureAlert(true, alert, alert.date, alert.location);
-        });
+        const locationsWithHighTemp = data
+          .filter(alert => alert.temperature > 30)
+          .map(alert => ({
+            location: alert.location,
+            temperature: alert.temperature,
+            date: alert.date
+          }));
+
+        if (locationsWithHighTemp.length > 0) {
+          handleTemperatureAlert(true, locationsWithHighTemp);
+        } else {
+          handleTemperatureAlert(false);
+        }
       } else {
         console.log(data.message); // No alerts triggered
+        handleTemperatureAlert(false);
       }
     })
     .catch(error => console.error("Error checking alerts:", error));
 }
 
 
-function handleTemperatureAlert(isActive, alertData, date, location) {
+
+
+let activeAlerts = []; // Keep track of locations currently being alerted
+
+function handleTemperatureAlert(isActive, alerts = []) {
   const thirtyMinutes = 30 * 60 * 1000;
 
   if (isActive) {
-    if (state.lastAlertTimestamp && new Date() - state.lastAlertTimestamp < thirtyMinutes) {
-      return;
+    // Remove locations from activeAlerts where temperature has dropped below the threshold
+    activeAlerts = activeAlerts.filter(activeAlert =>
+      alerts.some(alert => alert.location === activeAlert.location && alert.temperature > 30)
+    );
+
+    const newAlerts = alerts.filter(alert => 
+      !activeAlerts.some(activeAlert => activeAlert.location === alert.location) && alert.temperature > 30
+    );
+
+    if (newAlerts.length > 0) {
+      activeAlerts.push(...newAlerts);
     }
 
-    if (state.audioReady && audio.paused) {
-      audio.play().catch((error) => console.error("Failed to play audio:", error));
-    }
-
-    if (!Swal.isVisible()) {
-      const temperature = alertData ? alertData.temperature : null;
-      const formattedDate = new Date(date)
+    const locationDetails = activeAlerts.map(alert => `
+      <p>${alert.location}: ${alert.temperature}°C at ${new Date(alert.date)
         .toLocaleString("en-US", {
           weekday: "long",
           year: "numeric",
@@ -148,20 +166,31 @@ function handleTemperatureAlert(isActive, alertData, date, location) {
           minute: "2-digit",
           hour12: true,
         })
-        .replace(/:\d{2}\s/, " ");
+        .replace(/:\d{2}\s/, " ")}</p>
+    `).join("");
 
-      if (!state.emailSent) {
-        sendAlertEmail(alertData, date, location);
-        state.emailSent = true;
-      }
+    if (!state.emailSent) {
+      sendAlertEmail(activeAlerts); // Adjust to handle multiple locations
+      state.emailSent = true;
+    }
 
+    if (Swal.isVisible()) {
+      // Update the existing alert with new or removed locations
+      Swal.update({
+        html: `
+          <div style="text-align: center;">
+            <p>Temperature Exceeds Threshold at Locations:</p>
+            ${locationDetails}
+          </div>
+        `
+      });
+    } else if (activeAlerts.length > 0) {
       Swal.fire({
         title: "Warning!",
         html: `
                 <div style="text-align: center;">
-                    <p>Temperature Exceeds Threshold at Location: ${location}</p>
-                    <p>Current Temperature: ${temperature}°C</p>
-                    <p>Recorded at ${formattedDate}</p>
+                    <p>Temperature Exceeds Threshold at Locations:</p>
+                    ${locationDetails}
                 </div>
             `,
         icon: "warning",
@@ -175,17 +204,29 @@ function handleTemperatureAlert(isActive, alertData, date, location) {
         audio.currentTime = 0;
         state.lastAlertTimestamp = new Date();
         state.emailSent = false;
+        activeAlerts = []; // Clear active alerts after confirmation
       });
     }
+
+    if (state.audioReady && audio.paused && activeAlerts.length > 0) {
+      audio.play().catch((error) => console.error("Failed to play audio:", error));
+    }
+
   } else {
+    // Close the alert if it's visible and no locations are above the threshold
     audio.pause();
     audio.currentTime = 0;
     if (Swal.isVisible()) {
       Swal.close();
     }
+    activeAlerts = []; // Clear active alerts if no longer active
     state.emailSent = false;
   }
 }
+
+
+
+
 
 // Function to send alert email
 function sendAlertEmail(alertData, date, location) {
