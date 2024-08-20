@@ -49,7 +49,57 @@ app.listen(port, () => {
 
 
 
+app.get('/check-alerts', async (req, res) => {
+  const threshold = 30; // Temperature threshold for alert
+  const { startDate, endDate } = req.query;
 
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: "Start date and end date are required" });
+  }
+
+  try {
+    // Query to get raw temperature and humidity data for all locations
+    const query = `
+      SELECT 
+        location,
+        time_stamp,
+        temperature,
+        humidity
+      FROM 
+        stg_incremental_load_rpi
+      WHERE 
+        date_stamp BETWEEN ? AND ?
+        AND HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22)
+      ORDER BY 
+        location, date_stamp, time_stamp;
+    `;
+
+    db.query(query, [startDate, endDate], (err, results) => {
+      if (err) {
+        console.error("Error executing query:", err);
+        res.status(500).send("Error retrieving data");
+        return;
+      }
+
+      if (results.length === 0) {
+        res.status(404).send("No data found for the specified time range");
+        return;
+      }
+
+      // Filter locations with temperature exceeding the threshold
+      const alerts = results.filter(row => parseFloat(row.temperature) > threshold);
+
+      if (alerts.length > 0) {
+        res.status(200).json(alerts);
+      } else {
+        res.status(200).json({ message: 'No alerts triggered.' });
+      }
+    });
+  } catch (err) {
+    console.error("Error checking alerts:", err);
+    res.status(500).send("Error checking alerts");
+  }
+});
 
 
 

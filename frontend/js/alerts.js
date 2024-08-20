@@ -107,30 +107,37 @@ function showNotification(title, message, borderColor, bgColor, type) {
   }, 5000);
 }
 
-// Function to handle temperature alerts
-function handleTemperatureAlert(isActive, latestRow, latestDate) {
-  const thirtyMinutes = 30 * 60 * 1000; // 30 minutes
+function checkAllLocationsForAlerts(startDate, endDate) {
+  fetch(`http://localhost:3000/check-alerts?startDate=${startDate}&endDate=${endDate}`)
+    .then(response => response.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        data.forEach(alert => {
+          // Call handleTemperatureAlert with the alert data
+          handleTemperatureAlert(true, alert, alert.date, alert.location);
+        });
+      } else {
+        console.log(data.message); // No alerts triggered
+      }
+    })
+    .catch(error => console.error("Error checking alerts:", error));
+}
+
+
+function handleTemperatureAlert(isActive, alertData, date, location) {
+  const thirtyMinutes = 30 * 60 * 1000;
 
   if (isActive) {
-    if (
-      state.lastAlertTimestamp &&
-      new Date() - state.lastAlertTimestamp < thirtyMinutes
-    ) {
-      return; // Don't show alert if it was shown within the last 30 minutes
+    if (state.lastAlertTimestamp && new Date() - state.lastAlertTimestamp < thirtyMinutes) {
+      return;
     }
 
     if (state.audioReady && audio.paused) {
-      audio
-        .play()
-        .catch((error) => console.error("Failed to play audio:", error));
+      audio.play().catch((error) => console.error("Failed to play audio:", error));
     }
 
     if (!Swal.isVisible()) {
-      const temperature = latestRow
-        ? latestRow.temperature || latestRow.avg_temperature
-        : null;
-      const date = latestDate || new Date();
-
+      const temperature = alertData ? alertData.temperature : null;
       const formattedDate = new Date(date)
         .toLocaleString("en-US", {
           weekday: "long",
@@ -144,25 +151,21 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
         .replace(/:\d{2}\s/, " ");
 
       if (!state.emailSent) {
-        sendAlertEmail(latestRow, latestDate);
+        sendAlertEmail(alertData, date, location);
         state.emailSent = true;
       }
 
       Swal.fire({
         title: "Warning!",
         html: `
-                    <div style="text-align: center;">
-                        <p>Temperature Exceeds Threshold</p>
-                        <p>Current Temperature: ${temperature}°C</p>
-                        <p>Recorded at ${formattedDate}</p>
-                    </div>
-                `,
+                <div style="text-align: center;">
+                    <p>Temperature Exceeds Threshold at Location: ${location}</p>
+                    <p>Current Temperature: ${temperature}°C</p>
+                    <p>Recorded at ${formattedDate}</p>
+                </div>
+            `,
         icon: "warning",
-        backdrop: `
-                    rgba(255,0,0,0.4)
-                    left top
-                    no-repeat
-                `,
+        backdrop: `rgba(255,0,0,0.4) left top no-repeat`,
         allowOutsideClick: false,
         allowEscapeKey: false,
         allowEnterKey: false,
@@ -185,29 +188,32 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
 }
 
 // Function to send alert email
-function sendAlertEmail(latestRow, latestDate) {
+function sendAlertEmail(alertData, date, location) {
   fetch("http://localhost:3000/send-alert-email", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      temperature: latestRow.temperature || latestRow.avg_temperature,
-      date: latestDate,
+      temperature: alertData.temperature,
+      date: date,
+      location: location
     }),
   })
-    .then((response) => {
+    .then(response => {
       if (!response.ok) {
         throw new Error("Failed to send alert email");
       }
       console.log("Alert email sent successfully");
     })
-    .catch((error) => {
+    .catch(error => {
       console.error("Error sending alert email:", error);
     });
 }
 
+
+
 // Call this function on page load to ask for autoplay permission
 requestAutoplayPermission();
 
-export { handleTemperatureAlert, sendAlertEmail };
+export { handleTemperatureAlert, sendAlertEmail, checkAllLocationsForAlerts };

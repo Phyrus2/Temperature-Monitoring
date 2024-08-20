@@ -1,5 +1,5 @@
 import { clearErrorMessage, displayErrorMessage } from "./error.js";
-import { handleTemperatureAlert } from "./alerts.js";
+import { checkAllLocationsForAlerts } from "./alerts.js";
 import {
   renderDetailedTable,
   drawTemperatureChart,
@@ -16,7 +16,7 @@ function fetchDataAndDisplay(startDate, endDate, location) {
   fetchData(startDate, endDate,location, true, "chart");
 }
 
-function updateStats(data, isSingleDay) {
+function updateStats(data, isSingleDay, location, startDate, endDate) {
   if (data.length === 0) return;
 
   let highestTemp = -Infinity,
@@ -112,8 +112,7 @@ function updateStats(data, isSingleDay) {
     temperatureAlertActive = latestTemperature > 30;
   }
 
-  // Handle temperature alert
-  handleTemperatureAlert(temperatureAlertActive, latestRow, latestDate);
+  checkAllLocationsForAlerts(startDate, endDate);
 }
 
 
@@ -306,7 +305,7 @@ function fetchData(startDate, endDate, isFiltered = false, displayType) {
             }
           }
 
-          updateStats(data, isSingleDay);
+          updateStats(data, isSingleDay, location, startDate, endDate);
 
           // Always display charts
           document.getElementById("chartTemperature").style.display = "block";
@@ -472,6 +471,7 @@ function handleLocationChange() {
   // Fetch data based on the selected location and the current date range
   fetchData(startDate, endDate, location, true, 'table');
 }
+
 
 
 
