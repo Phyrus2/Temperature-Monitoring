@@ -108,7 +108,7 @@ function showNotification(title, message, borderColor, bgColor, type) {
   }, 5000);
 }
 
-function checkAllLocationsForAlerts(startDate, endDate) {
+function checkAllLocationsForAlerts(startDate, endDate, dateInfo) {
   fetch(`http://localhost:3000/check-alerts?startDate=${startDate}&endDate=${endDate}`)
     .then(response => response.json())
     .then(data => {
@@ -118,7 +118,7 @@ function checkAllLocationsForAlerts(startDate, endDate) {
           .map(alert => ({
             location: alert.location,
             temperature: alert.temperature,
-            date: alert.date
+            date: dateInfo || alert.date // Use dateInfo if available, fallback to alert.date
           }));
 
         if (locationsWithHighTemp.length > 0) {
@@ -140,7 +140,7 @@ function checkAllLocationsForAlerts(startDate, endDate) {
 
 
 
-function handleTemperatureAlert(isActive, alerts = []) {
+function handleTemperatureAlert(isActive, alerts = [], date) {
   const thirtyMinutes = 30 * 60 * 1000;
 
   if (isActive) {

@@ -112,7 +112,7 @@ function updateStats(data, isSingleDay, location, startDate, endDate) {
     temperatureAlertActive = latestTemperature > 30;
   }
 
-  checkAllLocationsForAlerts(startDate, endDate);
+  checkAllLocationsForAlerts(startDate, endDate, latestDate);
 }
 
 
