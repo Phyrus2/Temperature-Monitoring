@@ -20,18 +20,17 @@ function updateStats(data, isSingleDay, location, startDate, endDate) {
   if (data.length === 0) return;
 
   let highestTemp = -Infinity,
-    lowestTemp = Infinity;
+      lowestTemp = Infinity;
   let highestTempDate = "",
-    lowestTempDate = "";
+      lowestTempDate = "";
 
   let highestHumidity = -Infinity,
-    lowestHumidity = Infinity;
+      lowestHumidity = Infinity;
   let highestHumidityDate = "",
-    lowestHumidityDate = "";
+      lowestHumidityDate = "";
 
-  let temperatureAlertActive = false; // Flag to track if alert is active
+  let temperatureAlertActive = false;
 
-  // Find the latest data row
   let latestRow = null;
   let latestDate = -Infinity;
 
@@ -104,7 +103,6 @@ function updateStats(data, isSingleDay, location, startDate, endDate) {
   document.getElementById("lowest-humidity-date").textContent =
     formatDate(lowestHumidityDate);
 
-  // Check if the latest temperature exceeds the threshold
   if (latestRow) {
     const latestTemperature = parseFloat(
       latestRow.temperature || latestRow.avg_temperature
@@ -114,6 +112,7 @@ function updateStats(data, isSingleDay, location, startDate, endDate) {
 
   checkAllLocationsForAlerts(startDate, endDate, latestDate);
 }
+
 
 
 // for no location feature

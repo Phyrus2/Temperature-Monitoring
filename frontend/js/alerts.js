@@ -108,26 +108,31 @@ function showNotification(title, message, borderColor, bgColor, type) {
   }, 5000);
 }
 
-function checkAllLocationsForAlerts(startDate, endDate, dateInfo) {
+function checkAllLocationsForAlerts(startDate, endDate, latestDate) {
+  console.log("Latest Data Sent to checkAllLocationsForAlerts:", latestDate);
+
   fetch(`http://localhost:3000/check-alerts?startDate=${startDate}&endDate=${endDate}`)
     .then(response => response.json())
     .then(data => {
+      console.log("Fetched Data:", data);
+
       if (Array.isArray(data)) {
         const locationsWithHighTemp = data
-          .filter(alert => alert.temperature > 30)
-          .map(alert => ({
-            location: alert.location,
-            temperature: alert.temperature,
-            date: dateInfo || alert.date // Use dateInfo if available, fallback to alert.date
-          }));
+          .filter(alert => {
+            // Combine latestDate with alert's time_stamp to create a comparable Date object
+            const alertDate = new Date(latestDate.toISOString().split('T')[0] + 'T' + alert.time_stamp);
+            return alert.temperature > 30 && alertDate.getTime() >= latestDate.getTime();
+          });
+
+        console.log("Filtered Locations With High Temp:", locationsWithHighTemp);
 
         if (locationsWithHighTemp.length > 0) {
-          handleTemperatureAlert(true, locationsWithHighTemp);
+          handleTemperatureAlert(true, locationsWithHighTemp, latestDate);
         } else {
           handleTemperatureAlert(false);
         }
       } else {
-        console.log(data.message); // No alerts triggered
+        console.log("No array returned from the server, message:", data.message);
         handleTemperatureAlert(false);
       }
     })
@@ -135,16 +140,10 @@ function checkAllLocationsForAlerts(startDate, endDate, dateInfo) {
 }
 
 
-
-
-
-
-
-function handleTemperatureAlert(isActive, alerts = [], date) {
+function handleTemperatureAlert(isActive, alerts = [], latestDate) {
   const thirtyMinutes = 30 * 60 * 1000;
 
   if (isActive) {
-    // Remove locations from activeAlerts where temperature has dropped below the threshold
     activeAlerts = activeAlerts.filter(activeAlert =>
       alerts.some(alert => alert.location === activeAlert.location && alert.temperature > 30)
     );
@@ -158,55 +157,47 @@ function handleTemperatureAlert(isActive, alerts = [], date) {
     }
 
     const locationDetails = activeAlerts.map(alert => {
-      // Use current date as a fallback if alert.date is undefined
-      const date = new Date(alert.date || Date.now());
+      // Use latestDate as the date
+      const date = new Date(latestDate);
 
-      // Format the date
       const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+      const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();
 
       let hours = date.getHours();
       const minutes = String(date.getMinutes()).padStart(2, '0');
       const ampm = hours >= 12 ? 'PM' : 'AM';
       hours = hours % 12;
-      hours = hours ? hours : 12; // The hour '0' should be '12'
+      hours = hours ? hours : 12;
 
       const formattedDate = `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
 
-      return `
-        <p>${alert.location}: ${alert.temperature}°C at ${formattedDate}</p>
-      `;
+      return `<p>${alert.location}: ${alert.temperature}°C at ${formattedDate}</p>`;
     }).join("");
 
     if (!state.emailSent) {
-      sendAlertEmail(activeAlerts); // Adjust to handle multiple locations
+      sendAlertEmail(activeAlerts); 
       state.emailSent = true;
     }
 
     if (Swal.isVisible()) {
-      // Update the existing alert with new or removed locations
       Swal.update({
-        html: `
-          <div style="text-align: center;">
+        html: `<div style="text-align: center;">
             <p>Temperature Exceeds Threshold at Locations:</p>
             ${locationDetails}
-          </div>
-        `
+          </div>`
       });
     } else if (activeAlerts.length > 0) {
       if (state.lastAlertTimestamp && new Date() - state.lastAlertTimestamp < thirtyMinutes) {
-        return; // Prevent triggering a new alert within thirty minutes
+        return;
       }
 
       Swal.fire({
         title: "Warning!",
-        html: `
-                <div style="text-align: center;">
-                    <p>Temperature Exceeds Threshold at Locations:</p>
-                    ${locationDetails}
-                </div>
-            `,
+        html: `<div style="text-align: center;">
+                <p>Temperature Exceeds Threshold at Locations:</p>
+                ${locationDetails}
+              </div>`,
         icon: "warning",
         backdrop: `rgba(255,0,0,0.4) left top no-repeat`,
         allowOutsideClick: false,
@@ -218,7 +209,7 @@ function handleTemperatureAlert(isActive, alerts = [], date) {
         audio.currentTime = 0;
         state.lastAlertTimestamp = new Date();
         state.emailSent = false;
-        activeAlerts = []; // Clear active alerts after confirmation
+        activeAlerts = [];
       });
     }
 
@@ -227,16 +218,17 @@ function handleTemperatureAlert(isActive, alerts = [], date) {
     }
 
   } else {
-    // Close the alert if it's visible and no locations are above the threshold
     audio.pause();
     audio.currentTime = 0;
     if (Swal.isVisible()) {
       Swal.close();
     }
-    activeAlerts = []; // Clear active alerts if no longer active
+    activeAlerts = [];
     state.emailSent = false;
   }
 }
+
+
 
 
 
