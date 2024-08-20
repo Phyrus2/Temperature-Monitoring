@@ -1,5 +1,6 @@
 import { state } from "./config.js";
 
+let activeAlerts = []; // Keep track of locations currently being alerted
 const audio = document.getElementById("alert-sound");
 
 // Function to show the permission request modal
@@ -136,7 +137,8 @@ function checkAllLocationsForAlerts(startDate, endDate) {
 
 
 
-let activeAlerts = []; // Keep track of locations currently being alerted
+
+
 
 function handleTemperatureAlert(isActive, alerts = []) {
   const thirtyMinutes = 30 * 60 * 1000;
@@ -155,19 +157,27 @@ function handleTemperatureAlert(isActive, alerts = []) {
       activeAlerts.push(...newAlerts);
     }
 
-    const locationDetails = activeAlerts.map(alert => `
-      <p>${alert.location}: ${alert.temperature}°C at ${new Date(alert.date)
-        .toLocaleString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        })
-        .replace(/:\d{2}\s/, " ")}</p>
-    `).join("");
+    const locationDetails = activeAlerts.map(alert => {
+      // Use current date as a fallback if alert.date is undefined
+      const date = new Date(alert.date || Date.now());
+
+      // Format the date
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+      const year = date.getFullYear();
+
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // The hour '0' should be '12'
+
+      const formattedDate = `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+
+      return `
+        <p>${alert.location}: ${alert.temperature}°C at ${formattedDate}</p>
+      `;
+    }).join("");
 
     if (!state.emailSent) {
       sendAlertEmail(activeAlerts); // Adjust to handle multiple locations
@@ -185,6 +195,10 @@ function handleTemperatureAlert(isActive, alerts = []) {
         `
       });
     } else if (activeAlerts.length > 0) {
+      if (state.lastAlertTimestamp && new Date() - state.lastAlertTimestamp < thirtyMinutes) {
+        return; // Prevent triggering a new alert within thirty minutes
+      }
+
       Swal.fire({
         title: "Warning!",
         html: `
@@ -223,6 +237,11 @@ function handleTemperatureAlert(isActive, alerts = []) {
     state.emailSent = false;
   }
 }
+
+
+
+
+
 
 
 
