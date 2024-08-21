@@ -140,6 +140,7 @@ function checkAllLocationsForAlerts(startDate, endDate, latestDate) {
 }
 
 
+
 function handleTemperatureAlert(isActive, alerts = [], latestDate) {
   const thirtyMinutes = 30 * 60 * 1000;
 
@@ -157,7 +158,6 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
     }
 
     const locationDetails = activeAlerts.map(alert => {
-      // Use latestDate as the date
       const date = new Date(latestDate);
 
       const day = String(date.getDate()).padStart(2, '0');
@@ -172,11 +172,11 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
 
       const formattedDate = `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
 
-      return `<p>${alert.location}: ${alert.temperature}°C at ${formattedDate}</p>`;
+      return `<p>${alert.locationName}: ${alert.temperature}°C at ${formattedDate}</p>`;
     }).join("");
 
     if (!state.emailSent) {
-      sendAlertEmail(activeAlerts); 
+      sendAlertEmail(activeAlerts, latestDate);
       state.emailSent = true;
     }
 
@@ -239,17 +239,39 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
 
 
 
+
 // Function to send alert email
-function sendAlertEmail(alertData, date, location) {
+function sendAlertEmail(alertData, latestDate) {
+  const locationDetails = alertData.map(alert => {
+    return `<p><strong>Location:</strong> ${alert.locationName}, <strong>Temperature:</strong> ${alert.temperature}°C</p>`;
+  }).join("");
+
+  const formattedDate = new Date(latestDate)
+    .toLocaleString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    })
+    .replace(/:\d{2}\s/, " "); // Removes the seconds part.
+
+  // Log the data
+  console.log({
+    locationDetails: locationDetails, // This is the HTML-formatted string with location details
+    date: formattedDate, // This is the formatted date string
+  });
+
   fetch("http://localhost:3000/send-alert-email", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      temperature: alertData.temperature,
-      date: date,
-      location: location
+      locationDetails: locationDetails,
+      date: formattedDate,
     }),
   })
     .then(response => {
@@ -262,6 +284,9 @@ function sendAlertEmail(alertData, date, location) {
       console.error("Error sending alert email:", error);
     });
 }
+
+
+
 
 
 

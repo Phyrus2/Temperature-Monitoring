@@ -58,20 +58,23 @@ app.get('/check-alerts', async (req, res) => {
   }
 
   try {
-    // Query to get raw temperature and humidity data for all locations
+    // Query to get temperature and humidity data along with location names
     const query = `
       SELECT 
-        location,
-        time_stamp,
-        temperature,
-        humidity
+        l.locName as locationName,
+        s.location,
+        s.time_stamp,
+        s.temperature,
+        s.humidity
       FROM 
-        stg_incremental_load_rpi
+        stg_incremental_load_rpi s
+      JOIN 
+        location l ON s.location = l.locID
       WHERE 
-        date_stamp BETWEEN ? AND ?
-        AND HOUR(time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22)
+        s.date_stamp BETWEEN ? AND ?
+        AND HOUR(s.time_stamp) IN (6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21, 22)
       ORDER BY 
-        location, date_stamp, time_stamp;
+        s.location, s.date_stamp, s.time_stamp;
     `;
 
     db.query(query, [startDate, endDate], (err, results) => {
@@ -100,6 +103,7 @@ app.get('/check-alerts', async (req, res) => {
     res.status(500).send("Error checking alerts");
   }
 });
+
 
 
 

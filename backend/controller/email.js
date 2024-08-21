@@ -774,19 +774,11 @@ function getMonthName(monthNumber) {
 }
 
 const sendAlertEmail = async (req, res) => {
-  const { temperature, date } = req.body;
+  const { locationDetails, date } = req.body;
 
-  const formattedDate = new Date(date)
-    .toLocaleString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })
-    .replace(/:\d{2}\s/, " "); // Removes the minutes part.
+  if (!locationDetails || !date) {
+    return res.status(400).send("Missing location details or date");
+  }
 
   const mailOptions = {
     from: '"PEPITO THCheck" <alerts@yourdomain.com>',
@@ -797,8 +789,8 @@ const sendAlertEmail = async (req, res) => {
           <body style="font-family: Arial, sans-serif; color: #333;">
             <div style="border: 2px solid #ff0000; padding: 20px; border-radius: 5px; background-color: #fdd; max-width: 600px; margin: auto;">
               <h2 style="color: #ff0000;">⚠️ Temperature Exceeds Threshold!</h2>
-              <p><strong>Current Temperature:</strong> ${temperature}°C</p>
-              <p><strong>Recorded At:</strong> ${formattedDate}</p>
+              ${locationDetails} <!-- Correctly insert location details -->
+              <p><strong>Recorded At:</strong> ${date}</p> <!-- Correctly insert the formatted date -->
               <p style="font-weight: bold; color: #ff0000;">Immediate action is required to address the high temperature!</p>
               <p>For further assistance, please contact the Temperature Monitoring team.</p>
             </div>
@@ -816,6 +808,8 @@ const sendAlertEmail = async (req, res) => {
     res.send("Email sent successfully");
   });
 };
+
+
 
 module.exports = {
   // sendEmailForPreviousMonth,
