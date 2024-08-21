@@ -145,21 +145,27 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
   const thirtyMinutes = 30 * 60 * 1000;
 
   if (isActive) {
+    // Filter out alerts that no longer have high temperatures
     activeAlerts = activeAlerts.filter(activeAlert =>
       alerts.some(alert => alert.location === activeAlert.location && alert.temperature > 30)
     );
 
+    // Find new alerts (locations with temperature > 30 that are not already active)
     const newAlerts = alerts.filter(alert => 
       !activeAlerts.some(activeAlert => activeAlert.location === alert.location) && alert.temperature > 30
     );
 
+    // If new alerts are found, add them to the activeAlerts and send an email
     if (newAlerts.length > 0) {
       activeAlerts.push(...newAlerts);
+
+      // Send an email for the new alerts
+      sendAlertEmail(newAlerts, latestDate);
     }
 
+    // Prepare the alert details for display
     const locationDetails = activeAlerts.map(alert => {
       const date = new Date(latestDate);
-
       const day = String(date.getDate()).padStart(2, '0');
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const year = date.getFullYear();
@@ -171,21 +177,16 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
       hours = hours ? hours : 12;
 
       const formattedDate = `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
-
       return `<p>${alert.locationName}: ${alert.temperature}°C at ${formattedDate}</p>`;
     }).join("");
 
-    if (!state.emailSent) {
-      sendAlertEmail(activeAlerts, latestDate);
-      state.emailSent = true;
-    }
-
+    // Update the alert UI or show a new alert
     if (Swal.isVisible()) {
       Swal.update({
         html: `<div style="text-align: center;">
-            <p>Temperature Exceeds Threshold at Locations:</p>
-            ${locationDetails}
-          </div>`
+                <p>Temperature Exceeds Threshold at Locations:</p>
+                ${locationDetails}
+              </div>`
       });
     } else if (activeAlerts.length > 0) {
       if (state.lastAlertTimestamp && new Date() - state.lastAlertTimestamp < thirtyMinutes) {
@@ -208,23 +209,23 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
         audio.pause();
         audio.currentTime = 0;
         state.lastAlertTimestamp = new Date();
-        state.emailSent = false;
         activeAlerts = [];
       });
     }
 
+    // Play alert sound if audio is ready and there are active alerts
     if (state.audioReady && audio.paused && activeAlerts.length > 0) {
       audio.play().catch((error) => console.error("Failed to play audio:", error));
     }
 
   } else {
+    // If no active alerts, reset everything
     audio.pause();
     audio.currentTime = 0;
     if (Swal.isVisible()) {
       Swal.close();
     }
     activeAlerts = [];
-    state.emailSent = false;
   }
 }
 
@@ -240,7 +241,9 @@ function handleTemperatureAlert(isActive, alerts = [], latestDate) {
 
 
 
+
 // Function to send alert email
+// Function to send alert email for new alerts only
 function sendAlertEmail(alertData, latestDate) {
   const locationDetails = alertData.map(alert => {
     return `<p><strong>Location:</strong> ${alert.locationName}, <strong>Temperature:</strong> ${alert.temperature}°C</p>`;
@@ -264,6 +267,7 @@ function sendAlertEmail(alertData, latestDate) {
     date: formattedDate, // This is the formatted date string
   });
 
+  // Send the alert email with only the new alert details
   fetch("http://localhost:3000/send-alert-email", {
     method: "POST",
     headers: {
@@ -278,12 +282,13 @@ function sendAlertEmail(alertData, latestDate) {
       if (!response.ok) {
         throw new Error("Failed to send alert email");
       }
-      console.log("Alert email sent successfully");
+      console.log("Alert email sent successfully for new alerts");
     })
     .catch(error => {
       console.error("Error sending alert email:", error);
     });
 }
+
 
 
 
