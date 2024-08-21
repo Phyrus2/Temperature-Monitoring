@@ -674,58 +674,68 @@ const sendEmailForCurrentMonth = async (res, req, testMonth, testYear) => {
         let mailOptions = {
           from: '"PEPITO THCheck" <alerts@yourdomain.com>',
           to: "yudamulehensem@gmail.com",
-          subject: `Monthly Temperature and Humidity Report for ${getMonthName(
-            currentMonth
-          )} ${currentYear}`,
+          subject: `Monthly Temperature and Humidity Report for ${getMonthName(currentMonth)} ${currentYear}`,
           html: `
-              <html>
-                <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-                  <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-                    
-                    <header style="text-align: center; margin-bottom: 20px;">
-                      <h1>Monthly Temperature and Humidity Report</h1>
-                      <h2 style="color: #555;">${getMonthName(
-                        currentMonth
-                      )} ${currentYear}</h2>
-                    </header>
-          
-                    <main>
-                      <p style="font-size: 16px; margin-bottom: 20px;">
-                        Dear Administrator,
-                      </p>
-                      <p style="font-size: 16px; margin-bottom: 20px;">
-                        Please find the attached charts and table for the monthly temperature and humidity data. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
-                      </p>
-                      <p style="font-size: 16px; margin-bottom: 20px;">
-                        We encourage you to review the data to ensure optimal conditions are maintained.
-                      </p>
-                      <p style="font-size: 16px; font-weight: bold;">
-                        Attachment: Report for ${getMonthName(
-                          currentMonth
-                        )} ${currentYear}
-                      </p>
-                    </main>
-          
-                    <footer style="margin-top: 30px; text-align: center; color: #888;">
-                      <p style="font-size: 14px;">PEPITO THCheck</p>
-                      <p style="font-size: 14px;">Monitoring & Alerts Team</p>
-                      <p style="font-size: 14px;">
-                        <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
-                      </p>
-                    </footer>
-          
+            <html>
+              <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+                <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+                  
+                  <!-- Logo -->
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="cid:logoImage" alt="PEPITO THCheck Logo" style="max-width: 150px;" />
                   </div>
-                </body>
-              </html>
-            `,
+        
+                  <!-- Header -->
+                  <header style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="font-size: 24px; color: #333;">Monthly Temperature and Humidity Report</h1>
+                    <h2 style="font-size: 20px; color: #555;">${getMonthName(currentMonth)} ${currentYear}</h2>
+                  </header>
+          
+                  <!-- Main Content -->
+                  <main>
+                    <p style="font-size: 16px; margin-bottom: 20px;">
+                      Dear Administrator,
+                    </p>
+                    <p style="font-size: 16px; margin-bottom: 20px;">
+                      Please find the attached charts and table for the monthly temperature and humidity data. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
+                    </p>
+                    <p style="font-size: 16px; margin-bottom: 20px;">
+                      We encourage you to review the data to ensure optimal conditions are maintained.
+                    </p>
+                    <p style="font-size: 16px; font-weight: bold; margin-bottom: 20px;">
+                      Attachment: Report for ${getMonthName(currentMonth)} ${currentYear}
+                    </p>
+                  </main>
+          
+                  <!-- Footer -->
+                  <footer style="text-align: center; margin-top: 30px; color: #888;">
+                    <p style="font-size: 14px;">PEPITO THCheck</p>
+                    <p style="font-size: 14px;">Monitoring & Alerts Team</p>
+                    <p style="font-size: 14px;">
+                      <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
+                    </p>
+                  </footer>
+          
+                </div>
+              </body>
+            </html>
+          `,
           attachments: [
             {
               filename: `${getMonthName(currentMonth)} Report.pdf`,
               content: pdfBuffer,
               contentType: "application/pdf",
             },
-          ],
+            {
+              filename: 'pepito-logo.png', // Ensure the filename matches the actual logo file name
+              path: '../assets/pepito-logo.png', // Path to your logo image
+              cid: 'logoImage' // This must match the CID used in the img src above
+            }
+          ]
         };
+        
+        
+        
 
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
@@ -774,24 +784,52 @@ const sendAlertEmail = async (req, res) => {
     })
     .replace(/:\d{2}\s/, " "); // Removes the minutes part.
 
-  const mailOptions = {
-    from: '"PEPITO THCheck" <alerts@yourdomain.com>',
-    to: "yudamulehensem@gmail.com",
-    subject: "⚠️ Urgent Temperature Alert!",
-    html: `
+    const mailOptions = {
+      from: '"PEPITO THCheck" <alerts@yourdomain.com>',
+      to: "yudamulehensem@gmail.com",
+      subject: "⚠️ Urgent Temperature Alert!",
+      html: `
         <html>
-          <body style="font-family: Arial, sans-serif; color: #333;">
-            <div style="border: 2px solid #ff0000; padding: 20px; border-radius: 5px; background-color: #fdd; max-width: 600px; margin: auto;">
-              <h2 style="color: #ff0000;">⚠️ Temperature Exceeds Threshold!</h2>
-              <p><strong>Current Temperature:</strong> ${temperature}°C</p>
-              <p><strong>Recorded At:</strong> ${formattedDate}</p>
-              <p style="font-weight: bold; color: #ff0000;">Immediate action is required to address the high temperature!</p>
-              <p>For further assistance, please contact the Temperature Monitoring team.</p>
+          <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+            <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+              
+              <!-- Logo -->
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img src="cid:logoImage" alt="PEPITO THCheck Logo" style="max-width: 150px;" />
+              </div>
+              
+              <!-- Header -->
+              <header style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #ff0000;">⚠️ Temperature Exceeds Threshold!</h2>
+              </header>
+      
+              <!-- Main Content -->
+              <main>
+                <p style="font-size: 16px; text-align: center;"><strong>Current Temperature:</strong> ${temperature}°C</p>
+                <p style="font-size: 16px; text-align: center;"><strong>Recorded At:</strong> ${formattedDate}</p>
+                <p style="font-weight: bold; color: #ff0000; text-align: center;">Immediate action is required to address the high temperature!</p>
+                <p style="text-align: center;">For further assistance, please contact the Temperature Monitoring team.</p>
+              </main>
+      
+              <!-- Footer -->
+              <footer style="text-align: center; margin-top: 30px; color: #888;">
+                <p style="font-size: 12px;">PEPITO THCheck, All rights reserved.</p>
+              </footer>
+      
             </div>
           </body>
         </html>
       `,
-  };
+      attachments: [
+        {
+          filename: 'pepito-logo.png',
+          path: '../assets/pepito-logo.png',
+          cid: 'logoImage'
+        }
+      ]
+    };
+    
+  
 
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
