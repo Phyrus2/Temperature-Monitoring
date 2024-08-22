@@ -702,37 +702,62 @@ const sendEmailForCurrentMonth = async (req, res, testMonth, testYear) => {
       to: recipients,
       subject: `Monthly Temperature and Humidity Reports - ${getMonthName(currentMonth)} ${currentYear}`,
       html: `
-        <html>
-          <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+         <html>
+          <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+            <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+              
+              <!-- Logo -->
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img src="cid:logoImage" alt="PEPITO THCheck Logo" style="max-width: 150px;" />
+              </div>
+    
+              <!-- Header -->
               <header style="text-align: center; margin-bottom: 20px;">
-                <h1>Monthly Temperature and Humidity Reports</h1>
-                <h2 style="color: #555;">${getMonthName(currentMonth)} ${currentYear}</h2>
+                <h1 style="font-size: 24px; color: #333;">Monthly Temperature and Humidity Report</h1>
+                <h2 style="font-size: 20px; color: #555;">${getMonthName(currentMonth)} ${currentYear}</h2>
               </header>
+      
+              <!-- Main Content -->
               <main>
                 <p style="font-size: 16px; margin-bottom: 20px;">
                   Dear Administrator,
                 </p>
                 <p style="font-size: 16px; margin-bottom: 20px;">
-                  Please find the attached PDF files for the monthly temperature and humidity data for all stores. Each file provides detailed insights into the temperature and humidity levels recorded throughout the month.
+                  Please find the attached charts and table for the monthly temperature and humidity data. The report provides detailed insights into the temperature and humidity levels recorded throughout the month.
                 </p>
                 <p style="font-size: 16px; margin-bottom: 20px;">
                   We encourage you to review the data to ensure optimal conditions are maintained.
                 </p>
+                <p style="font-size: 16px; font-weight: bold; margin-bottom: 20px;">
+                  Attachment: Report for ${getMonthName(currentMonth)} ${currentYear}
+                </p>
               </main>
-              <footer style="margin-top: 30px; text-align: center; color: #888;">
+      
+              <!-- Footer -->
+              <footer style="text-align: center; margin-top: 30px; color: #888;">
                 <p style="font-size: 14px;">PEPITO THCheck</p>
                 <p style="font-size: 14px;">Monitoring & Alerts Team</p>
                 <p style="font-size: 14px;">
                   <a href="mailto:pepitoTHCheck@gmail.com" style="color: #0073e6; text-decoration: none;">PEPITO THCheck Support</a>
                 </p>
               </footer>
+      
             </div>
           </body>
         </html>
       `,
-      attachments: attachments
+      
+       
+      attachments: [
+        ...attachments,
+        {
+          filename: 'pepito-logo.png', 
+          path: '../assets/pepito-logo.png', 
+          cid: 'logoImage' 
+        }
+      ]
     };
+
 
     await new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (error, info) => {
@@ -780,23 +805,70 @@ const sendAlertEmail = async (req, res) => {
     return res.status(400).send("Missing location details or date");
   }
 
+  // Convert the HTML string into plain text and handle location and temperature separately
+  const formattedLocationDetails = locationDetails.split("</p>").map(detail => {
+    if (!detail.trim()) return ''; // Skip empty details
+
+    // Use regex to extract location and temperature, if available
+    const locationMatch = detail.match(/<strong>Location:<\/strong>\s*([^,]+)/i);
+    const temperatureMatch = detail.match(/<strong>Temperature:<\/strong>\s*([^<]+)/i);
+
+    // Extract location and temperature, or set fallback for missing temperature
+    const location = locationMatch ? `Location: ${locationMatch[1].trim()}` : "Location: Unknown";
+    const temperature = temperatureMatch ? `Temperature: ${temperatureMatch[1].trim()}` : "Temperature: N/A";
+
+    return `
+      <div style="font-size: 16px; font-weight: bold; margin: 5px 0;">
+        ${location}<br/>
+        ${temperature}
+      </div>
+    `;
+  }).join("");
+
   const mailOptions = {
     from: '"PEPITO THCheck" <alerts@yourdomain.com>',
     to: "yudamulehensem@gmail.com",
     subject: "⚠️ Urgent Temperature Alert!",
     html: `
         <html>
-          <body style="font-family: Arial, sans-serif; color: #333;">
-            <div style="border: 2px solid #ff0000; padding: 20px; border-radius: 5px; background-color: #fdd; max-width: 600px; margin: auto;">
-              <h2 style="color: #ff0000;">⚠️ Temperature Exceeds Threshold!</h2>
-              ${locationDetails} <!-- Correctly insert location details -->
-              <p><strong>Recorded At:</strong> ${date}</p> <!-- Correctly insert the formatted date -->
-              <p style="font-weight: bold; color: #ff0000;">Immediate action is required to address the high temperature!</p>
-              <p>For further assistance, please contact the Temperature Monitoring team.</p>
+        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f4f4f4; padding: 20px;">
+          <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); text-align: center;">
+            
+            <!-- Logo -->
+            <div style="text-align: center;">
+              <img src="cid:logoImage" alt="PEPITO THCheck Logo" style="max-width: 150px;" />
             </div>
-          </body>
-        </html>
+            
+            <!-- Header -->
+            <header style="margin-bottom: 20px;">
+              <h2 style="color: #ff0000; font-size: 28px;">⚠️ Temperature Exceeds Threshold!</h2>
+            </header>
+    
+            <!-- Main Content -->
+            <main>
+              ${formattedLocationDetails}
+              <p style="font-size: 16px; margin-top: 20px;"><strong>Recorded At:</strong> ${date}</p>
+              <p style="font-size: 16px; font-weight: bold; color: #ff0000;">Immediate action is required to address the high temperature!</p>
+              <p style="font-size: 16px;">For further assistance, please contact the Temperature Monitoring team.</p>
+            </main>
+    
+            <!-- Footer -->
+            <footer style="margin-top: 30px; color: #888;">
+              <p style="font-size: 12px;">PEPITO THCheck, All rights reserved.</p>
+            </footer>
+    
+          </div>
+        </body>
+      </html>
       `,
+      attachments: [
+        
+        {
+          filename: 'pepito-logo.png', 
+          path: '../assets/pepito-logo.png', 
+          cid: 'logoImage' 
+        }
+      ]
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
@@ -808,6 +880,19 @@ const sendAlertEmail = async (req, res) => {
     res.send("Email sent successfully");
   });
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
