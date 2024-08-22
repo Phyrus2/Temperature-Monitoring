@@ -681,7 +681,7 @@ const sendEmailForCurrentMonth = async (res, req, testMonth, testYear) => {
                 <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
                   
                   <!-- Logo -->
-                  <div style="text-align: center; margin-bottom: 20px;">
+                  <div style="text-align: center;">
                     <img src="cid:logoImage" alt="PEPITO THCheck Logo" style="max-width: 150px;" />
                   </div>
         
@@ -794,7 +794,7 @@ const sendAlertEmail = async (req, res) => {
             <div style="max-width: 600px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
               
               <!-- Logo -->
-              <div style="text-align: center; margin-bottom: 20px;">
+              <div style="text-align: center;">
                 <img src="cid:logoImage" alt="PEPITO THCheck Logo" style="max-width: 150px;" />
               </div>
               
