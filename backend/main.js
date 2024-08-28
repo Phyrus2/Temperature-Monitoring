@@ -30,8 +30,17 @@ schedule.scheduleJob(rule, async () => {
 });
 
 app.get("/test-email", (req, res) => {
-  email.sendEmailForCurrentMonth(res, req, 5, 2024); // Example: Testing with June 2024
+  email.sendEmailForCurrentMonth(res, req, 5, 2024)
+    .then(() => {
+      console.log("Email sent successfully.");
+      res.status(200).send("Email sent successfully.");
+    })
+    .catch(error => {
+      console.error("Error sending email:", error);
+      res.status(500).send("Error sending email.");
+    });
 });
+
 app.get("/average-data", data.averageData);
 app.get("/detailed-data", data.detailedData);
 app.get("/data-by-date", data.dataByDate);

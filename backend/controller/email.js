@@ -10,8 +10,6 @@ let transporter = nodemailer.createTransport({
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASS, // Replace with actual password
   },
-  logger: true,
-  debug: true,
 });
 
 async function generatePdf(
