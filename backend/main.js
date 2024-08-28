@@ -20,7 +20,7 @@ schedule.scheduleJob(rule, async () => {
   try {
     await email.sendEmailForCurrentMonth();
     console.log(
-      `Email sent successfully on the 13th of ${moment()
+      `Email sent successfully of ${moment()
         .tz("Asia/Makassar")
         .format("MMMM YYYY")}`
     );
