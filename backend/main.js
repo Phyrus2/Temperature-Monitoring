@@ -29,21 +29,6 @@ schedule.scheduleJob(rule, async () => {
   }
 });
 
-// cron.schedule(
-//   '0 23 L * *',
-//   async () => {
-//     try {
-//       email.sendEmailForPreviousMonth();
-//       console.log("Email sent successfully");
-//     } catch (error) {
-//       console.error("Error sending email:", error);
-//     }
-//   },
-//   {
-//     timezone: "Asia/Makassar", // Adjust to WITA timezone
-//   }
-// );
-
 app.get("/test-email", (req, res) => {
   email.sendEmailForCurrentMonth(res, req, 5, 2024); // Example: Testing with June 2024
 });
