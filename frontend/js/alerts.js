@@ -1,4 +1,5 @@
 import { state } from "./config.js";
+import { resetToDefaultDateRange } from "./filter.js";
 
 const audio = document.getElementById("alert-sound");
 
@@ -172,6 +173,7 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
         audio.currentTime = 0;
         state.lastAlertTimestamp = new Date();
         state.emailSent = false;
+        resetToDefaultDateRange(); // Reset data display to default date range
       });
     }
   } else {
@@ -183,6 +185,7 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
     state.emailSent = false;
   }
 }
+
 
 // Function to send alert email
 function sendAlertEmail(latestRow, latestDate) {
