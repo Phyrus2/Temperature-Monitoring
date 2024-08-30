@@ -4,11 +4,16 @@ const cors = require("cors"); // Import cors module
 const email = require("../backend/controller/email");
 const data = require("../backend/controller/fetch-data");
 const schedule = require("node-schedule");
+require('./logger'); // This will override console.log and console.error
+const deleteLog = require("./deleteLog")
 
 const app = express();
 const port = 3000;
 app.use(cors());
 app.use(express.json());
+
+
+setInterval(deleteLog, 86400000);
 
 const rule = new schedule.RecurrenceRule();
 rule.date = -1; // Last day of the month

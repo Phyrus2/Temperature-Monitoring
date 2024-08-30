@@ -1,0 +1,17 @@
+2024-08-30T06:54:14.336Z - Server running at http://localhost:3000
+2024-08-30T06:54:19.550Z - Database connected!
+2024-08-30T06:54:22.249Z - Email sent successfully.
+2024-08-30T06:54:22.571Z - Formatted Average Results:
+2024-08-30T06:54:22.660Z - Formatted Detailed Results:
+2024-08-30T06:54:22.869Z - Humidity Data:
+2024-08-30T06:54:22.872Z - Temperature Data:
+2024-08-30T06:54:22.876Z - Labels:
+2024-08-30T06:57:31.449Z - Server running at http://localhost:3000
+2024-08-30T06:57:31.469Z - Database connected!
+2024-08-30T06:58:26.315Z - Email sent successfully.
+2024-08-30T06:58:26.369Z - Formatted Average Results:
+2024-08-30T06:58:26.406Z - Formatted Detailed Results:
+2024-08-30T06:58:26.516Z - Humidity Data:
+2024-08-30T06:58:26.519Z - Temperature Data:
+2024-08-30T06:58:26.522Z - Labels:
+2024-08-30T06:58:41.886Z - Email sent: 250 2.0.0 OK  1725001121 d2e1a72fcca58-715e569e746sm2189586b3a.97 - gsmtp
