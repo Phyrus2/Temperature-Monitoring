@@ -15,3 +15,30 @@
 2024-08-30T06:58:26.519Z - Temperature Data:
 2024-08-30T06:58:26.522Z - Labels:
 2024-08-30T06:58:41.886Z - Email sent: 250 2.0.0 OK  1725001121 d2e1a72fcca58-715e569e746sm2189586b3a.97 - gsmtp
+2024-08-31T01:43:30.149Z - Server running at http://localhost:3000
+2024-08-31T01:43:43.443Z - Server running at http://localhost:3000
+2024-08-31T01:43:43.468Z - Database connected!
+2024-08-31T01:44:32.838Z - Server running at http://localhost:3000
+2024-08-31T01:44:32.856Z - Database connected!
+2024-08-31T01:45:00.140Z - Formatted Average Results:
+2024-08-31T01:45:00.157Z - Formatted Detailed Results:
+2024-08-31T01:45:00.295Z - Humidity Data:
+2024-08-31T01:45:00.297Z - Temperature Data:
+2024-08-31T01:45:00.299Z - Labels:
+2024-08-31T01:47:04.031Z - Server running at http://localhost:3000
+2024-08-31T01:47:04.048Z - Database connected!
+2024-08-31T01:47:12.627Z - Server running at http://localhost:3000
+2024-08-31T01:47:12.646Z - Database connected!
+2024-08-31T01:50:27.802Z - Scheduled job for August 31st 2024, 9:51:59 am
+2024-08-31T01:50:27.809Z - Server running at http://localhost:3000
+2024-08-31T01:50:27.827Z - Database connected!
+2024-08-31T01:52:00.010Z - Email sent successfully for August 2024
+2024-08-31T01:52:00.059Z - Formatted Average Results:
+2024-08-31T01:52:00.085Z - Formatted Detailed Results:
+2024-08-31T01:52:00.175Z - Humidity Data:
+2024-08-31T01:52:00.177Z - Temperature Data:
+2024-08-31T01:52:00.179Z - Labels:
+2024-08-31T01:52:08.085Z - Email sent: 250 2.0.0 OK  1725072663 d2e1a72fcca58-715e56d9716sm3515200b3a.174 - gsmtp
+2024-08-31T01:52:30.758Z - Scheduled job for August 31st 2024, 11:00:59 pm
+2024-08-31T01:52:30.764Z - Server running at http://localhost:3000
+2024-08-31T01:52:30.782Z - Database connected!
