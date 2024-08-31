@@ -16,22 +16,6 @@ app.use(express.json());
 
 setInterval(deleteLog, 86400000);
 
-const cronExpression = '48 9 L * *'; // 9:45 PM on the last day of the month (21 in UTC is 9 in WITA)
-
-schedule.scheduleJob(cronExpression, 'Asia/Makassar', async () => {
-  try {
-    await email.sendEmailForCurrentMonth();
-    console.log(
-      `Email sent successfully for ${moment()
-        .tz("Asia/Makassar")
-        .format("MMMM YYYY")}`
-    );
-  } catch (error) {
-    console.error("Error sending email:", error);
-  }
-});
-
-
 function scheduleLastDayOfMonthJob() {
   const now = moment().tz('Asia/Makassar'); // Current time in WITA
   const lastDayOfMonth = now.clone().endOf('month'); // Last day of the current month
