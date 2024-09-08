@@ -103,3 +103,14 @@
 2024-09-08T10:40:44.850Z - Email sent:
 2024-09-08T10:40:53.412Z - Email sent:
 2024-09-08T10:41:13.553Z - Email sent:
+2024-09-08T10:41:34.879Z - Email sent:
+2024-09-08T10:44:56.519Z - Today is not the last day of the month; job not scheduled.
+2024-09-08T10:44:56.525Z - Server running at http://localhost:3000
+2024-09-08T10:44:56.542Z - Database connected!
+2024-09-08T10:45:24.774Z - Email sent successfully.
+2024-09-08T10:45:24.805Z - Formatted Average Results:
+2024-09-08T10:45:24.815Z - Formatted Detailed Results:
+2024-09-08T10:45:24.819Z - Humidity Data:
+2024-09-08T10:45:24.820Z - Temperature Data:
+2024-09-08T10:45:24.820Z - Labels:
+2024-09-08T10:45:34.876Z - Email sent: 250 2.0.0 OK  1725792335 d2e1a72fcca58-718e58c11d4sm1919072b3a.72 - gsmtp

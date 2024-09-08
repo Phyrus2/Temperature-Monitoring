@@ -1,0 +1,804 @@
+Today is not the last day of the month; job not scheduled.
+Server running at http://localhost:3000
+Database connected!
+Email sent successfully.
+Formatted Average Results: [
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    avg_temperature: '18.25',
+    avg_humidity: '32.82'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    avg_temperature: '18.28',
+    avg_humidity: '32.05'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    avg_temperature: '18.00',
+    avg_humidity: '32.35'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    avg_temperature: '17.90',
+    avg_humidity: '33.63'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    avg_temperature: '18.02',
+    avg_humidity: '33.03'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    avg_temperature: '17.98',
+    avg_humidity: '37.27'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    avg_temperature: '18.60',
+    avg_humidity: '36.33'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    avg_temperature: '20.52',
+    avg_humidity: '36.65'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    avg_temperature: '19.87',
+    avg_humidity: '36.65'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    avg_temperature: '20.45',
+    avg_humidity: '36.97'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    avg_temperature: '22.70',
+    avg_humidity: '35.92'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    avg_temperature: '26.42',
+    avg_humidity: '35.02'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    avg_temperature: '24.18',
+    avg_humidity: '35.03'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    avg_temperature: '24.42',
+    avg_humidity: '33.03'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    avg_temperature: '24.23',
+    avg_humidity: '33.33'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    avg_temperature: '25.58',
+    avg_humidity: '33.88'
+  },
+  {
+    date: 2024-05-16T16:00:00.000Z,
+    avg_temperature: '24.87',
+    avg_humidity: '34.02'
+  },
+  {
+    date: 2024-05-17T16:00:00.000Z,
+    avg_temperature: '25.02',
+    avg_humidity: '34.08'
+  },
+  {
+    date: 2024-05-18T16:00:00.000Z,
+    avg_temperature: '25.33',
+    avg_humidity: '34.58'
+  },
+  {
+    date: 2024-05-19T16:00:00.000Z,
+    avg_temperature: '24.60',
+    avg_humidity: '35.55'
+  },
+  {
+    date: 2024-05-20T16:00:00.000Z,
+    avg_temperature: '25.25',
+    avg_humidity: '34.65'
+  },
+  {
+    date: 2024-05-21T16:00:00.000Z,
+    avg_temperature: '24.92',
+    avg_humidity: '35.15'
+  },
+  {
+    date: 2024-05-22T16:00:00.000Z,
+    avg_temperature: '25.92',
+    avg_humidity: '34.90'
+  },
+  {
+    date: 2024-05-23T16:00:00.000Z,
+    avg_temperature: '26.08',
+    avg_humidity: '33.72'
+  },
+  {
+    date: 2024-05-24T16:00:00.000Z,
+    avg_temperature: '25.22',
+    avg_humidity: '33.30'
+  },
+  {
+    date: 2024-05-25T16:00:00.000Z,
+    avg_temperature: '25.33',
+    avg_humidity: '37.80'
+  },
+  {
+    date: 2024-05-26T16:00:00.000Z,
+    avg_temperature: '28.20',
+    avg_humidity: '35.82'
+  },
+  {
+    date: 2024-05-27T16:00:00.000Z,
+    avg_temperature: '26.95',
+    avg_humidity: '34.17'
+  },
+  {
+    date: 2024-05-28T16:00:00.000Z,
+    avg_temperature: '25.80',
+    avg_humidity: '37.27'
+  },
+  {
+    date: 2024-05-29T16:00:00.000Z,
+    avg_temperature: '25.07',
+    avg_humidity: '39.22'
+  },
+  {
+    date: 2024-05-30T16:00:00.000Z,
+    avg_temperature: '26.28',
+    avg_humidity: '39.90'
+  }
+]
+Formatted Detailed Results: [
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '19.10',
+    humidity: '36.70'
+  },
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '18.30',
+    humidity: '31.30'
+  },
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '17.30',
+    humidity: '32.50'
+  },
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '18.40',
+    humidity: '32.40'
+  },
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '18.00',
+    humidity: '31.70'
+  },
+  {
+    date: 2024-04-30T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '18.40',
+    humidity: '32.30'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    time: '07:00:02',
+    temperature: '18.50',
+    humidity: '31.50'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '19.30',
+    humidity: '33.30'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '17.50',
+    humidity: '32.70'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '18.50',
+    humidity: '32.20'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '18.50',
+    humidity: '30.70'
+  },
+  {
+    date: 2024-05-01T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '17.40',
+    humidity: '31.90'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '18.30',
+    humidity: '32.10'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '18.20',
+    humidity: '31.60'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    time: '13:00:01',
+    temperature: '17.30',
+    humidity: '32.00'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    time: '16:00:02',
+    temperature: '18.60',
+    humidity: '33.70'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '17.70',
+    humidity: '32.20'
+  },
+  {
+    date: 2024-05-02T16:00:00.000Z,
+    time: '22:00:01',
+    temperature: '17.90',
+    humidity: '32.50'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '18.60',
+    humidity: '32.10'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    time: '10:00:01',
+    temperature: '17.60',
+    humidity: '39.00'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '17.10',
+    humidity: '33.00'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    time: '15:59:59',
+    temperature: '19.50',
+    humidity: '32.50'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '17.30',
+    humidity: '33.20'
+  },
+  {
+    date: 2024-05-03T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '17.30',
+    humidity: '32.00'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '18.10',
+    humidity: '34.70'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    time: '10:00:02',
+    temperature: '17.50',
+    humidity: '32.40'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    time: '13:00:02',
+    temperature: '18.10',
+    humidity: '32.20'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '17.10',
+    humidity: '33.10'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '17.80',
+    humidity: '32.90'
+  },
+  {
+    date: 2024-05-04T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '19.50',
+    humidity: '32.90'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '17.00',
+    humidity: '40.10'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '17.50',
+    humidity: '32.40'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '18.60',
+    humidity: '36.90'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '18.80',
+    humidity: '41.20'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '18.00',
+    humidity: '37.50'
+  },
+  {
+    date: 2024-05-05T16:00:00.000Z,
+    time: '22:00:03',
+    temperature: '18.00',
+    humidity: '35.50'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '18.00',
+    humidity: '34.10'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '19.00',
+    humidity: '36.50'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    time: '13:00:03',
+    temperature: '19.40',
+    humidity: '36.30'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '18.30',
+    humidity: '36.70'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '18.40',
+    humidity: '37.50'
+  },
+  {
+    date: 2024-05-06T16:00:00.000Z,
+    time: '22:00:03',
+    temperature: '18.50',
+    humidity: '36.90'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '20.40',
+    humidity: '34.90'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '20.70',
+    humidity: '36.20'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '19.50',
+    humidity: '36.10'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '21.50',
+    humidity: '37.90'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    time: '19:00:02',
+    temperature: '21.20',
+    humidity: '38.10'
+  },
+  {
+    date: 2024-05-07T16:00:00.000Z,
+    time: '22:00:02',
+    temperature: '19.80',
+    humidity: '36.70'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '20.10',
+    humidity: '35.60'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '19.30',
+    humidity: '37.30'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '19.40',
+    humidity: '36.60'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '20.00',
+    humidity: '37.30'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    time: '19:00:03',
+    temperature: '20.00',
+    humidity: '36.20'
+  },
+  {
+    date: 2024-05-08T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '20.40',
+    humidity: '36.90'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '19.40',
+    humidity: '36.40'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '19.30',
+    humidity: '36.80'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '20.70',
+    humidity: '36.60'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '21.30',
+    humidity: '36.60'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    time: '19:00:02',
+    temperature: '21.10',
+    humidity: '38.50'
+  },
+  {
+    date: 2024-05-09T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '20.90',
+    humidity: '36.90'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '20.90',
+    humidity: '36.00'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '22.80',
+    humidity: '36.80'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '23.00',
+    humidity: '35.10'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '21.00',
+    humidity: '34.80'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '23.80',
+    humidity: '36.40'
+  },
+  {
+    date: 2024-05-10T16:00:00.000Z,
+    time: '22:00:02',
+    temperature: '24.70',
+    humidity: '36.40'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '24.70',
+    humidity: '33.40'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    time: '10:00:02',
+    temperature: '29.10',
+    humidity: '36.00'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    time: '12:59:59',
+    temperature: '31.10',
+    humidity: '39.20'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '24.90',
+    humidity: '30.80'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '24.50',
+    humidity: '35.40'
+  },
+  {
+    date: 2024-05-11T16:00:00.000Z,
+    time: '22:00:03',
+    temperature: '24.20',
+    humidity: '35.30'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '24.90',
+    humidity: '35.30'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '24.00',
+    humidity: '35.40'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '23.70',
+    humidity: '32.60'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    time: '16:00:02',
+    temperature: '24.20',
+    humidity: '34.80'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '24.00',
+    humidity: '35.70'
+  },
+  {
+    date: 2024-05-12T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '24.30',
+    humidity: '36.40'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '25.60',
+    humidity: '30.20'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '24.70',
+    humidity: '34.60'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '23.90',
+    humidity: '32.10'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '24.00',
+    humidity: '33.60'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '24.00',
+    humidity: '33.90'
+  },
+  {
+    date: 2024-05-13T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '24.30',
+    humidity: '33.80'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '25.10',
+    humidity: '33.90'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    time: '10:00:02',
+    temperature: '23.70',
+    humidity: '32.30'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '23.80',
+    humidity: '34.30'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '23.90',
+    humidity: '32.70'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    time: '19:00:01',
+    temperature: '24.30',
+    humidity: '33.50'
+  },
+  {
+    date: 2024-05-14T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '24.60',
+    humidity: '33.30'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    time: '07:00:00',
+    temperature: '26.80',
+    humidity: '33.70'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    time: '10:00:00',
+    temperature: '25.80',
+    humidity: '33.60'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '25.50',
+    humidity: '35.10'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '25.10',
+    humidity: '33.60'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    time: '19:00:00',
+    temperature: '24.70',
+    humidity: '33.60'
+  },
+  {
+    date: 2024-05-15T16:00:00.000Z,
+    time: '22:00:00',
+    temperature: '25.60',
+    humidity: '33.70'
+  },
+  {
+    date: 2024-05-16T16:00:00.000Z,
+    time: '07:00:02',
+    temperature: '26.50',
+    humidity: '31.80'
+  },
+  {
+    date: 2024-05-16T16:00:00.000Z,
+    time: '10:00:01',
+    temperature: '24.20',
+    humidity: '34.10'
+  },
+  {
+    date: 2024-05-16T16:00:00.000Z,
+    time: '13:00:00',
+    temperature: '24.10',
+    humidity: '35.80'
+  },
+  {
+    date: 2024-05-16T16:00:00.000Z,
+    time: '16:00:00',
+    temperature: '24.30',
+    humidity: '34.20'
+  },
+  ... 86 more items
+]
+Humidity Data: [
+  '32.82', '32.05', '32.35', '33.63',
+  '33.03', '37.27', '36.33', '36.65',
+  '36.65', '36.97', '35.92', '35.02',
+  '35.03', '33.03', '33.33', '33.88',
+  '34.02', '34.08', '34.58', '35.55',
+  '34.65', '35.15', '34.90', '33.72',
+  '33.30', '37.80', '35.82', '34.17',
+  '37.27', '39.22', '39.90'
+]
+Temperature Data: [
+  '18.25', '18.28', '18.00', '17.90',
+  '18.02', '17.98', '18.60', '20.52',
+  '19.87', '20.45', '22.70', '26.42',
+  '24.18', '24.42', '24.23', '25.58',
+  '24.87', '25.02', '25.33', '24.60',
+  '25.25', '24.92', '25.92', '26.08',
+  '25.22', '25.33', '28.20', '26.95',
+  '25.80', '25.07', '26.28'
+]
+Labels: [
+  2024-04-30T16:00:00.000Z, 2024-05-01T16:00:00.000Z,
+  2024-05-02T16:00:00.000Z, 2024-05-03T16:00:00.000Z,
+  2024-05-04T16:00:00.000Z, 2024-05-05T16:00:00.000Z,
+  2024-05-06T16:00:00.000Z, 2024-05-07T16:00:00.000Z,
+  2024-05-08T16:00:00.000Z, 2024-05-09T16:00:00.000Z,
+  2024-05-10T16:00:00.000Z, 2024-05-11T16:00:00.000Z,
+  2024-05-12T16:00:00.000Z, 2024-05-13T16:00:00.000Z,
+  2024-05-14T16:00:00.000Z, 2024-05-15T16:00:00.000Z,
+  2024-05-16T16:00:00.000Z, 2024-05-17T16:00:00.000Z,
+  2024-05-18T16:00:00.000Z, 2024-05-19T16:00:00.000Z,
+  2024-05-20T16:00:00.000Z, 2024-05-21T16:00:00.000Z,
+  2024-05-22T16:00:00.000Z, 2024-05-23T16:00:00.000Z,
+  2024-05-24T16:00:00.000Z, 2024-05-25T16:00:00.000Z,
+  2024-05-26T16:00:00.000Z, 2024-05-27T16:00:00.000Z,
+  2024-05-28T16:00:00.000Z, 2024-05-29T16:00:00.000Z,
+  2024-05-30T16:00:00.000Z
+]
+Email sent: 250 2.0.0 OK  1725792335 d2e1a72fcca58-718e58c11d4sm1919072b3a.72 - gsmtp
+^C
