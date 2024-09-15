@@ -226,7 +226,7 @@ function updateStats(data, isSingleDay) {
     const latestTemperature = parseFloat(
       latestRow.temperature || latestRow.avg_temperature
     );
-    temperatureAlertActive = latestTemperature > 30;
+    temperatureAlertActive = latestTemperature > 27;
   }
 
   // Handle temperature alert

@@ -803,6 +803,7 @@ const sendAlertEmail = async (req, res) => {
       
               <!-- Main Content -->
               <main>
+                <p style="font-size: 16px; text-align: center;"><strong>The normal server temperature range is 18°C to 27°C,</p>
                 <p style="font-size: 16px; text-align: center;"><strong>Current Temperature:</strong> ${temperature}°C</p>
                 <p style="font-size: 16px; text-align: center;"><strong>Recorded At:</strong> ${formattedDate}</p>
                 <p style="font-weight: bold; color: #ff0000; text-align: center;">Immediate action is required to address the high temperature!</p>

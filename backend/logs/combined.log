@@ -114,3 +114,13 @@
 2024-09-08T10:45:24.820Z - Temperature Data:
 2024-09-08T10:45:24.820Z - Labels:
 2024-09-08T10:45:34.876Z - Email sent: 250 2.0.0 OK  1725792335 d2e1a72fcca58-718e58c11d4sm1919072b3a.72 - gsmtp
+2024-09-15T12:29:16.581Z - Today is not the last day of the month; job not scheduled.
+2024-09-15T12:29:16.590Z - Server running at http://localhost:3000
+2024-09-15T12:29:16.617Z - Database connected!
+2024-09-15T12:34:33.681Z - Email sent:
+2024-09-15T12:35:54.490Z - Email sent:
+2024-09-15T12:37:16.357Z - Today is not the last day of the month; job not scheduled.
+2024-09-15T12:37:16.364Z - Server running at http://localhost:3000
+2024-09-15T12:37:16.382Z - Database connected!
+2024-09-15T12:37:23.607Z - Email sent:
+2024-09-15T12:37:50.855Z - Email sent:

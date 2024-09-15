@@ -154,6 +154,7 @@ function handleTemperatureAlert(isActive, latestRow, latestDate) {
         html: `
                     <div style="text-align: center;">
                         <p>Temperature Exceeds Threshold</p>
+                        <p>The normal server temperature range is 18°C to 27°C,</p>
                         <p>Current Temperature: ${temperature}°C</p>
                         <p>Recorded at ${formattedDate}</p>
                     </div>
